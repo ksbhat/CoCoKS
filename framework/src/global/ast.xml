@@ -11,13 +11,8 @@
 
     <type name="Extern" ctype="keyword" init="Key_extern" copy="literal" />
     <type name="Export" ctype="keyword" init="Key_export" copy="literal" />
-    <type name="Equals" ctype="keyword" init="Key_equals" copy="literal" />
     <type name="Return" ctype="keyword" init="Key_return" copy="literal" />
     <type name="Else" ctype="keyword" init="Key_else" copy="literal" />
-    <type name="L_FL_Bracket" ctype="keyword" init="Key_L_FL_Bracket" copy="literal" />
-    <type name="R_FL_Bracket" ctype="keyword" init="Key_R_FL_Bracket" copy="literal" />
-    <type name="L_Bracket" ctype="keyword" init="Key_L_Bracket" copy="literal" />
-    <type name="R_Bracket" ctype="keyword" init="Key_R_Bracket" copy="literal" />
     <type name="IfKeyword" ctype="keyword" init="Key_if" copy="literal" />
     <type name="Do" ctype="keyword" init="Key_do" copy="literal" />
     <type name="While" ctype="keyword" init="Key_while" copy="literal" />
@@ -111,8 +106,13 @@
     <nodeset name="Block" >
 	<target>
 	   <node name="EnclosedBlock"/>
-	   <!-- TO DO: Check whether 'set' can be used here or not. -->
 	   <node name="Statement"/>
+	</target>
+    </nodeset>
+    <nodeset name="VarOrNum" >
+	<target>
+	   <node name="Var"/>
+	   <node name="Num"/>
 	</target>
     </nodeset>
   </nodesets>
@@ -300,96 +300,11 @@
 	</attributes>
      </node>
 
-    <node name="Equals">
-	<sons />
-	<attributes>
-	   <attribute name="Value">
-		<type name="Equals">
-		  <targets>
-		      <target mandatory="yes">
-			<any />
-			<phases>
-			   <all />
-			</phases>
-		      </target>
-		  </targets>
-		</type>
-	   </attribute>
-	</attributes>
-      </node>
     <node name="IfKeyword">
 	<sons />
 	<attributes>
 	   <attribute name="Value">
 		<type name="IfKeyword">
-		  <targets>
-		      <target mandatory="yes">
-			<any />
-			<phases>
-			   <all />
-			</phases>
-		      </target>
-		  </targets>
-		</type>
-	   </attribute>
-	</attributes>
-    </node>
-    <node name="L_FL_Bracket">
-	<sons />
-	<attributes>
-	   <attribute name="Value">
-		<type name="L_FL_Bracket">
-		  <targets>
-		      <target mandatory="yes">
-			<any />
-			<phases>
-			   <all />
-			</phases>
-		      </target>
-		  </targets>
-		</type>
-	   </attribute>
-	</attributes>
-    </node>
-    <node name="R_FL_Bracket">
-	<sons />
-	<attributes>
-	   <attribute name="Value">
-		<type name="R_FL_Bracket">
-		  <targets>
-		      <target mandatory="yes">
-			<any />
-			<phases>
-			   <all />
-			</phases>
-		      </target>
-		  </targets>
-		</type>
-	   </attribute>
-	</attributes>
-    </node>
-    <node name="L_Bracket">
-	<sons />
-	<attributes>
-	   <attribute name="Value">
-		<type name="L_Bracket">
-		  <targets>
-		      <target mandatory="yes">
-			<any />
-			<phases>
-			   <all />
-			</phases>
-		      </target>
-		  </targets>
-		</type>
-	   </attribute>
-	</attributes>
-    </node>
-    <node name="R_Bracket">
-	<sons />
-	<attributes>
-	   <attribute name="Value">
-		<type name="R_Bracket">
 		  <targets>
 		      <target mandatory="yes">
 			<any />
@@ -603,8 +518,101 @@
 	     </son>
 	</sons>
    </node>
-   <node name="FunBody">
+   <node name="LocalFunDef">
+	<sons>
+	    <son name="FunHeader">
+		<targets>
+		   <target mandatory="yes">
+			<node name="FunHeader"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	     <son name="FunBody">
+		<targets>
+		   <target mandatory="yes">
+			<node name="FunBody"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	</sons>
    </node>
+
+   <node name="FunBody">
+	<sons>
+	    <son name="VarDecList">
+		<targets>
+		   <target mandatory="no">
+			<node name="VarDecList"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	    <son name="LocalFunDefList">
+		<targets>
+		   <target mandatory="no">
+			<node name="LocalFunDefList"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	    <son name="StatementList">
+		<targets>
+		   <target mandatory="no">
+			<node name="StatementList"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	     <son name="Return">
+		<targets>
+		   <target mandatory="yes">
+			<node name="Return"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	</sons>
+   </node>
+
+
+   <node name="LocalFunDefList">
+	<sons>
+	    <son name="LocalFunDef">
+		<targets>
+		   <target mandatory="yes">
+			<node name="LocalFunDef"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	     <son name="Next">
+          	<targets>
+            	  <target mandatory="no">
+             	  <node name="LocalFunDefList" />
+              		<phases>
+                		<all />
+              		</phases>
+                  </target>
+           	</targets>
+             </son>
+	</sons>
+    </node>
 
    <node name="GlobalDef" >
       <sons>
@@ -672,6 +680,16 @@
 		   </target>
 		</targets>
 	     </son>
+	    <son name="VarNumList">
+		<targets>
+		   <target mandatory="no">
+			<node name="Type"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
 	     <son name="Var">
 		<targets>
 		   <target mandatory="yes">
@@ -684,6 +702,31 @@
 	     </son>
 	</sons>
    </node>
+  
+    <node name="VarNumList">
+	<sons>
+	    <son name="VarOrNum">
+		<targets>
+		   <target mandatory="yes">
+			<set name="VarOrNum"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	     <son name="Next">
+          	<targets>
+            	  <target mandatory="no">
+             	  <node name="VarNumList" />
+              		<phases>
+                		<all />
+              		</phases>
+                  </target>
+           	</targets>
+             </son>
+	</sons>
+    </node>
 
    <node name="VarDecList">
 	<sons>
@@ -987,16 +1030,6 @@
             </target>
           </targets>
         </son>
-        <son name="Equals">
-          <targets>
-            <target mandatory="yes">
-              <node name="Equals" />
-              <phases>
-                <all />
-              </phases>
-            </target>
-          </targets>
-        </son>
         <son name="Expr">
           <targets>
             <target mandatory="yes">
@@ -1074,16 +1107,6 @@
 		   </target>
 		</targets>
 	     </son>
-	     <son name="L_Bracket">
-		<targets>
-		   <target mandatory="yes">
-			<node name="L_Bracket"/>
-			<phases>
-			   <all />
-			</phases>
-		   </target>
-		</targets>
-	     </son>
 	     <son name="Expr">
           	<targets>
             	  <target mandatory="yes">
@@ -1094,16 +1117,6 @@
                   </target>
            	</targets>
              </son>
-	     <son name="R_Bracket">
-		<targets>
-		   <target mandatory="yes">
-			<node name="R_Bracket"/>
-			<phases>
-			   <all />
-			</phases>
-		   </target>
-		</targets>
-	     </son>
 	     <son name="Block">
           	<targets>
             	  <target mandatory="yes">
@@ -1171,30 +1184,10 @@
 
     <node name="EnclosedBlock">
 	<sons>
-           <son name="L_FL_Bracket">
-          	<targets>
-            	  <target mandatory="yes">
-             	  <node name="L_FL_Bracket" />
-              		<phases>
-                		<all />
-              		</phases>
-                  </target>
-           	</targets>
-            </son>
 	   <son name="StatementList">
           	<targets>
             	  <target mandatory="yes">
              	  <node name="StatementList" />
-              		<phases>
-                		<all />
-              		</phases>
-                  </target>
-           	</targets>
-            </son>
-	    <son name="R_FL_Bracket">
-          	<targets>
-            	  <target mandatory="yes">
-             	  <node name="R_FL_Bracket" />
               		<phases>
                 		<all />
               		</phases>
@@ -1298,30 +1291,10 @@
     </node>
     <node name="Cast">
       <sons>
-	<son name="L_Bracket">
-          <targets>
-            <target mandatory="yes">
-              <node name="L_Bracket" />
-              <phases>
-                <all />
-              </phases>
-            </target>
-          </targets>
-        </son>
 	<son name="Type">
           <targets>
             <target mandatory="yes">
               <node name="Type" />
-              <phases>
-                <all />
-              </phases>
-            </target>
-          </targets>
-        </son>
-	<son name="R_Bracket">
-          <targets>
-            <target mandatory="yes">
-              <node name="R_Bracket" />
               <phases>
                 <all />
               </phases>
@@ -1344,30 +1317,10 @@
 
     <node name="EnclosedExpr">
       <sons>
-	<son name="L_Bracket">
-          <targets>
-            <target mandatory="yes">
-              <node name="L_Bracket" />
-              <phases>
-                <all />
-              </phases>
-            </target>
-          </targets>
-        </son>
 	<son name="Expr">
           <targets>
             <target mandatory="yes">
               <set name="Expr" />
-              <phases>
-                <all />
-              </phases>
-            </target>
-          </targets>
-        </son>
-	<son name="R_Bracket">
-          <targets>
-            <target mandatory="yes">
-              <node name="R_Bracket" />
               <phases>
                 <all />
               </phases>
