@@ -61,6 +61,7 @@
 	<node name="FunCall" />
         <node name="Const" />
 	<node name="EnclosedExpr" />	
+	<!--TODO: Ask and uncomment! node name="ExprList" /-->
         <!--node name="Num" />
         <node name="Float" />
         <node name="Bool" /-->
@@ -74,6 +75,12 @@
         <node name="DoWhileStat" />
         <node name="WhileStat" />
         <node name="ForStat" />
+      </target>
+    </nodeset>
+    <nodeset name="Set_GlobalDef">
+      <target>
+	<node name="UsualDef" />
+	<node name="ArrayDef" />
       </target>
     </nodeset>
     <nodeset name="Set_Const" >
@@ -118,6 +125,7 @@
   </nodesets>
 
   <syntaxtree>
+
      <node name="Const">
       <sons>
         <son name="Set_Const">
@@ -187,6 +195,16 @@
 		   </target>
 		</targets>
 	     </son>
+	    <son name="ExprList">
+		<targets>
+		   <target mandatory="no">
+			<node name="ExprList"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
 	    <son name="Var">
 		<targets>
 		   <target mandatory="yes">
@@ -215,6 +233,16 @@
 		<targets>
 		   <target mandatory="yes">
 			<node name="Type"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	    <son name="VarNumList">
+		<targets>
+		   <target mandatory="no">
+			<node name="VarNumList"/>
 			<phases>
 			   <all />
 			</phases>
@@ -614,7 +642,21 @@
 	</sons>
     </node>
 
-   <node name="GlobalDef" >
+   <node name="GlobalDef">
+	<sons>
+	   <son name="Set_GlobalDef">
+	    <targets>
+		<target mandatory="yes">
+		   <set name="Set_GlobalDef"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+	    </targets>
+	  </son>
+   	</sons>
+   </node>
+   <node name="UsualDef" >
       <sons>
 	    <son name="Export">
 		<targets>
@@ -657,6 +699,52 @@
 		</targets>
 	     </son>
 	</sons>
+       <attributes />
+    </node>
+    <node name="ArrayDef" >
+      <sons>
+	    <son name="Export">
+		<targets>
+		   <target mandatory="no">
+			<node name="Export"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	    <son name="Type">
+		<targets>
+		   <target mandatory="yes">
+			<node name="Type"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	    <son name="ExprList">
+		<targets>
+		   <target mandatory="yes">
+			<node name="ExprList"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	     <son name="Var">
+		<targets>
+		   <target mandatory="yes">
+			<node name="Var"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
+	</sons>
+	<attributes />
     </node>
     <node name="GlobalDec">
 	<sons>
@@ -701,6 +789,7 @@
 		</targets>
 	     </son>
 	</sons>
+      <attributes />
    </node>
   
     <node name="VarNumList">
@@ -1333,6 +1422,16 @@
 
     <node name="VarLet">
       <sons>
+	    <son name="ExprList">
+		<targets>
+		   <target mandatory="no">
+			<node name="ExprList"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
       </sons>
       <attributes>
         <attribute name="Name">
@@ -1363,6 +1462,16 @@
     </node>
     <node name="Var">
       <sons>
+	    <son name="ExprList">
+		<targets>
+		   <target mandatory="no">
+			<node name="ExprList"/>
+			<phases>
+			   <all />
+			</phases>
+		   </target>
+		</targets>
+	     </son>
       </sons>
       <attributes>
         <attribute name="Name">
