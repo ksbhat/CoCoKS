@@ -1,0 +1,72 @@
+/*
+ * Phase and subphase definitions
+ */
+
+
+#include "phase_initialise_defs.mac"
+
+/******************************************************************************/
+
+
+PHASE( ld,
+       "Loading CiviC program",
+       ALWAYS)
+
+SUBPHASE( cpp,
+          "Running C preprocessor",
+          SPdoRunPreProcessor, 
+          NEVER,
+          ld)
+
+SUBPHASE( scp,
+          "Reading input file",
+          SPdoScanParse, 
+          ALWAYS,
+          ld)
+
+ENDPHASE( ld) 
+
+
+/*********** Added by Koustubha Bhat. 6th feb 2013 ************************** /
+
+PHASE ( prefixphase, "Prefixing phase", ALWAYS)
+
+SUBPHASE (prefix, "Prefixing __ for all variables", PREFIXdoPrefix, ALWAYS, prefixphase)
+
+ENDPHASE( prefixphase)
+
+******************************************************************************/
+
+/*********** Added by Koustubha Bhat. 11th feb 2013 ************************** /
+
+PHASE ( cntbinopphase, "Counting binary operations phase", ALWAYS)
+
+SUBPHASE (cntbinop, "Counting binops", CNTBINOPdoCount, ALWAYS, cntbinopphase)
+
+ENDPHASE( cntbinopphase)
+
+******************************************************************************/
+
+
+PHASE( cg,
+       "Generating Code",
+       ALWAYS)
+
+SUBPHASE( prt, 
+          "Generating byte code",
+          PRTdoPrint, 
+          ALWAYS,
+          cg)      
+
+SUBPHASE( frtr, 
+          "De-allocating syntax tree representation",
+          FREEdoFreeTree, 
+          ALWAYS,
+          cg)
+
+ENDPHASE( cg) 
+
+
+/******************************************************************************/
+
+#include "phase_undefine_defs.mac"

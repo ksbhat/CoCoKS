@@ -1,0 +1,289 @@
+
+************************************
+* Making civicc
+************************************
+
+Generating files in directory src/framework
+
+Making current subdirectory (developer version)
+  Generating html file from XML specification:  ast.html
+./src/global/ast.xml:138: parser error : Opening and ending tag mismatch: targets line 130 and son
+	     </son>
+	           ^
+./src/global/ast.xml:148: parser error : Opening and ending tag mismatch: targets line 140 and son
+	     </son>
+	           ^
+./src/global/ast.xml:149: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:150: parser error : Opening and ending tag mismatch: son line 129 and node
+    </node>
+           ^
+./src/global/ast.xml:162: parser error : Opening and ending tag mismatch: targets line 154 and son
+	     </son>
+	           ^
+./src/global/ast.xml:172: parser error : Opening and ending tag mismatch: targets line 164 and son
+	     </son>
+	           ^
+./src/global/ast.xml:182: parser error : Opening and ending tag mismatch: targets line 174 and son
+	     </son>
+	           ^
+./src/global/ast.xml:183: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:184: parser error : Opening and ending tag mismatch: son line 163 and node
+    </node>
+           ^
+./src/global/ast.xml:196: parser error : Opening and ending tag mismatch: targets line 188 and son
+	     </son>
+	           ^
+./src/global/ast.xml:206: parser error : Opening and ending tag mismatch: targets line 198 and son
+	     </son>
+	           ^
+./src/global/ast.xml:207: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:208: parser error : Opening and ending tag mismatch: son line 187 and node
+     </node>
+            ^
+./src/global/ast.xml:254: parser error : Opening and ending tag mismatch: targets line 246 and son
+	     </son>
+	           ^
+./src/global/ast.xml:264: parser error : Opening and ending tag mismatch: targets line 256 and son
+	     </son>
+	           ^
+./src/global/ast.xml:265: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:266: parser error : Opening and ending tag mismatch: son line 245 and node
+    </node>
+           ^
+./src/global/ast.xml:279: parser error : Opening and ending tag mismatch: targets line 271 and son
+	     </son>
+	           ^
+./src/global/ast.xml:289: parser error : Opening and ending tag mismatch: targets line 281 and son
+	     </son>
+	           ^
+./src/global/ast.xml:299: parser error : Opening and ending tag mismatch: targets line 291 and son
+	     </son>
+	           ^
+./src/global/ast.xml:300: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:301: parser error : Opening and ending tag mismatch: son line 280 and node
+    </node>
+           ^
+./src/global/ast.xml:330: parser error : Opening and ending tag mismatch: targets line 322 and son
+	     </son>
+	           ^
+./src/global/ast.xml:341: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:342: parser error : Opening and ending tag mismatch: sons line 320 and node
+    </node>
+           ^
+./src/global/ast.xml:355: parser error : Opening and ending tag mismatch: targets line 347 and son
+	     </son>
+	           ^
+./src/global/ast.xml:365: parser error : Opening and ending tag mismatch: targets line 357 and son
+	     </son>
+	           ^
+./src/global/ast.xml:375: parser error : Opening and ending tag mismatch: targets line 367 and son
+	     </son>
+	           ^
+./src/global/ast.xml:376: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:377: parser error : Opening and ending tag mismatch: son line 356 and node
+   </node>
+          ^
+./src/global/ast.xml:392: parser error : Opening and ending tag mismatch: targets line 384 and son
+	     </son>
+	           ^
+./src/global/ast.xml:402: parser error : Opening and ending tag mismatch: targets line 394 and son
+	     </son>
+	           ^
+./src/global/ast.xml:412: parser error : Opening and ending tag mismatch: targets line 404 and son
+	     </son>
+	           ^
+./src/global/ast.xml:422: parser error : Opening and ending tag mismatch: targets line 414 and son
+	     </son>
+	           ^
+./src/global/ast.xml:423: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:424: parser error : Opening and ending tag mismatch: son line 403 and node
+    </node>
+           ^
+./src/global/ast.xml:436: parser error : Opening and ending tag mismatch: targets line 428 and son
+	     </son>
+	           ^
+./src/global/ast.xml:446: parser error : Opening and ending tag mismatch: targets line 438 and son
+	     </son>
+	           ^
+./src/global/ast.xml:456: parser error : Opening and ending tag mismatch: targets line 448 and son
+	     </son>
+	           ^
+./src/global/ast.xml:457: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:458: parser error : Opening and ending tag mismatch: son line 437 and node
+   </node>
+          ^
+./src/global/ast.xml:471: parser error : Opening and ending tag mismatch: targets line 463 and son
+	     </son>
+	           ^
+./src/global/ast.xml:482: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:483: parser error : Opening and ending tag mismatch: sons line 461 and node
+    </node>
+           ^
+./src/global/ast.xml:495: parser error : Opening and ending tag mismatch: targets line 487 and son
+	     </son>
+	           ^
+./src/global/ast.xml:506: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:507: parser error : Opening and ending tag mismatch: sons line 485 and node
+    </node>
+           ^
+./src/global/ast.xml:537: parser error : Opening and ending tag mismatch: targets line 529 and son
+	     </son>
+	           ^
+./src/global/ast.xml:548: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:549: parser error : Opening and ending tag mismatch: sons line 527 and node
+    </node>
+           ^
+./src/global/ast.xml:824: parser error : Opening and ending tag mismatch: targets line 816 and son
+	     </son>
+	           ^
+./src/global/ast.xml:835: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:836: parser error : Opening and ending tag mismatch: sons line 814 and node
+    </node>
+           ^
+./src/global/ast.xml:848: parser error : Opening and ending tag mismatch: targets line 840 and son
+	     </son>
+	           ^
+./src/global/ast.xml:858: parser error : Opening and ending tag mismatch: targets line 850 and son
+	     </son>
+	           ^
+./src/global/ast.xml:878: parser error : Opening and ending tag mismatch: targets line 870 and son
+	     </son>
+	           ^
+./src/global/ast.xml:899: parser error : expected '>'
+	</sons>
+	     ^
+./src/global/ast.xml:900: parser error : Opening and ending tag mismatch: son line 849 and node
+    </node>
+           ^
+./src/global/ast.xml:1194: parser error : Opening and ending tag mismatch: son line 839 and syntaxtree
+  </syntaxtree>
+               ^
+./src/global/ast.xml:1195: parser error : Opening and ending tag mismatch: sons line 838 and definition
+</definition>
+             ^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 837
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 813
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 526
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 484
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 460
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag son line 427
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag sons line 426
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 425
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag son line 393
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag son line 383
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag sons line 382
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 381
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag son line 346
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag sons line 345
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 344
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 319
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag son line 270
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag sons line 269
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 268
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag sons line 244
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 243
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag sons line 186
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 185
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag son line 153
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag sons line 152
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 151
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag sons line 128
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag node line 127
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag syntaxtree line 101
+
+^
+./src/global/ast.xml:1197: parser error : Premature end of data in tag definition line 3
+
+^
+unable to parse ./src/global/ast.xml
+  Compiling developer code:  free_attribs.c
+In file included from src/framework/free_attribs.c:49:0:
+src/framework/tree_basic.h:68:3: error: unknown type name ‘nodetype’
+src/framework/tree_basic.h:70:3: error: unknown type name ‘node’
+src/framework/tree_basic.h:71:24: error: field ‘sons’ has incomplete type
+src/framework/tree_basic.h:72:24: error: field ‘attribs’ has incomplete type
+make[2]: *** [src/framework/free_attribs.o] Error 1
+make[1]: *** [devel] Error 2
+make: *** [civicc.go] Error 2

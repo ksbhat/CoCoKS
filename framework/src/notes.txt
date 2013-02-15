@@ -1,0 +1,4 @@
+Framework: no need to modify
+global: global to different steps (front end, backend, middle end)
+
+each step would become a directory at here.
