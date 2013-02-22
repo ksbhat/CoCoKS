@@ -14,9 +14,6 @@ typedef enum { BO_add, BO_sub, BO_mul, BO_div, BO_mod,
                BO_lt, BO_le, BO_gt, BO_ge, BO_eq, BO_ne, 
                BO_and, BO_or, BO_unknown } binop;
 
-typedef enum { Key_extern, Key_export, Key_L_FL_Bracket, Key_R_FL_Bracket,
-	       Key_L_Bracket, Key_R_Bracket, Key_if, Key_else, Key_for,
-	       Key_while, Key_do, Key_return,
-	       Key_void, Key_int, Key_float, Key_bool, Key_equals } keyword;
+typedef enum { T_unknown, T_int, T_bool, T_float, T_void } type;
 
 #endif  /* _CIVCC_MYTYPES_H_ */
