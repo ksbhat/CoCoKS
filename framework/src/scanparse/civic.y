@@ -40,7 +40,7 @@ static int yyerror( char *errname);
 %token FL_BRACKET_L FL_BRAKCET_R SQ_BRACKET_L SQ_BRACKET_R
 %token IF FOR DO WHILE
 %type <node> intval floatval boolval constant expr
-%type <node> instrs instr assign varlet program
+%type <node> assign varlet program
 %type <cbinop> binop
 
 %start program
