@@ -39,6 +39,7 @@ static int yyerror( char *errname);
 %token EXTERN EXPORT VOID INT BOOL FLOAT RETURN 
 %token FL_BRACKET_L FL_BRAKCET_R SQ_BRACKET_L SQ_BRACKET_R
 %token IF FOR DO WHILE
+%token NOT
 %type <node> intval floatval boolval constant expr
 %type <node> assign varlet program
 %type <cbinop> binop
@@ -145,7 +146,16 @@ binop: PLUS      { $$ = BO_add; }
      | OR        { $$ = BO_or; }
      | AND       { $$ = BO_and; }
      ;
-      
+     
+monop: MINUS	{$$ = MO_neg;}
+	  |	NOT		{$$	= MO_not;}
+
+type:  VOID		{$$ = T_void;}
+	 |INT		{$$ = T_int;} 
+	 |BOOL 		{$$ = T_bool;}
+	 |FLOAT 	{$$ = T_float;}
+
+	 
 %%
 
 static int yyerror( char *error)
