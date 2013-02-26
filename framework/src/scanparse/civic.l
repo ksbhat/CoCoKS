@@ -12,20 +12,31 @@
 #include "globals.h"
 #include "ctinfo.h"
 
-#define DEBUG(msg) \
-	printf("%s:l:%d,c:%d\t%s\n", "DEBUG",global.line, global.col,msg);
+#ifdef DEBUG
+	#define DEBUG(msg) \
+		printf("%s:l:%d,c:%d\t%s\n", "DEBUG",globals.line, globals.col,msg);
+#else
+	#define DEBUG(msg) ;
+#endif
 
 #define FILTER(token) \
-  global.col += yyleng;  \
+  globals.col += yyleng;  \
   return( token);
 
 #define INC_LINECNT() \
-  global.line += 1;   \
-  global.col = 0;     \
+  globals.line += 1;   \
+  globals.col = 0;     \
   yyless(1);     
 
 #define LINEBUF_SIZE 256
 #define YY_NO_UNPUT
+
+struct Global
+{
+  int line;
+  int col;
+} globals;
+
 
 /*************************************
 TOKENS declared in the parser
@@ -46,6 +57,7 @@ IF
 DO
 WHILE
 FOR
+NOT
 */
 
 %}
@@ -57,8 +69,8 @@ FOR
 
 %%
 
-"//.*$"			   { 
-				DEBUG("SINGLE COMMENT START");
+"//"(.*)$		   { 
+				DEBUG("SINGLE COMMENT ");
 				DEBUG(yytext);
  				/*single line comment ; no need to send it to the parser */ ; } 
 
@@ -69,13 +81,13 @@ FOR
 			   }
 
 <COMMENT>\n		   { 
-				DEBUG("COMMENT Line");
+				DEBUG("COMMENT NewLine");
 				DEBUG(yytext);
 				
 				INC_LINECNT();    }
 
-<COMMENT>"*/"		   {  
-				DEBUG("COMMENT end");
+<COMMENT>.*"*/"		   {  
+				DEBUG("COMMENT END");
 				DEBUG(yytext);
 				
 				BEGIN(INITIAL); 
@@ -85,10 +97,10 @@ FOR
 				DEBUG("COMMENT line");
 				DEBUG(yytext);
 				
-				 global.col += yyleng;
+				 globals.col += yyleng;
 			}
 "("                     { 
-				DEBUG("Simple Bracket START");
+				DEBUG("Simple Bracket");
 				DEBUG(yytext);
 				
 				FILTER( BRACKET_L); 
@@ -100,105 +112,112 @@ FOR
 				FILTER( BRACKET_R); 
 			}
 ","                     { 
-				DEBUG("COmma START");
+				DEBUG("Comma ");
 				DEBUG(yytext);
 				
 				FILTER( COMMA); 
 			}
 
 ";"                     { 	
-				DEBUG("semicolon START");
+				DEBUG("semicolon ");
 				DEBUG(yytext);
 				
 				FILTER( SEMICOLON); 
 			}
 
 "-"                     { 	
-				DEBUG("hyphen START");
+				DEBUG("hyphen ");
 				DEBUG(yytext);
 				
 				FILTER( MINUS); 
 			}
 
 "+"                     { 
-				DEBUG("plus START");
+				DEBUG("plus ");
 				DEBUG(yytext);
 				
 				FILTER( PLUS);  
 			}
 
 "*"                     { 	
-				DEBUG("multiply START");
+				DEBUG("multiply ");
 				DEBUG(yytext);
 				
 				FILTER( STAR);
 			} 
 
 "/"                     { 
-				DEBUG("divide START");
+				DEBUG("divide ");
 				DEBUG(yytext);
 				
 				FILTER( SLASH);  
 			} 
 
+"!"                     { 
+				DEBUG("unary NOT ");
+				DEBUG(yytext);
+				
+				FILTER( NOT);  
+			} 
+
 "%"                     {	
-				DEBUG("mod START");
+				DEBUG("mod ");
 				DEBUG(yytext);
 				
 				 FILTER( PERCENT); 
 			} 
 
 "<="                    { 	
-				DEBUG("lE START");
+				DEBUG("LE ");
 				DEBUG(yytext);
 				
 				FILTER( LE);
 			}
 
 "<"                     { 
-				DEBUG("less START");
+				DEBUG("less ");
 				DEBUG(yytext);
 				
 				FILTER( LT);    
 			} 
 
 ">="                    { 	
-				DEBUG("Ge START");
+				DEBUG("GE ");
 				DEBUG(yytext);
 				
 				FILTER( GE);    
 			}
 
 ">"                     { 
-				DEBUG("greater START");
+				DEBUG("greater ");
 				DEBUG(yytext);
 				
 				FILTER( GT);    
 			}
 
 "=="                    { 	
-				DEBUG("equals START");
+				DEBUG("equals ");
 				DEBUG(yytext);
 				
 				FILTER( EQ);    
 			}
 
 "!="                    { 
-				DEBUG("not equals START");
+				DEBUG("not equals ");
 				DEBUG(yytext);
 				
 				FILTER( NE);
 		        }
 
 "&&"                    { 
-				DEBUG("and START");
+				DEBUG("and ");
 				DEBUG(yytext);
 				
 				FILTER( AND);    
 			}
 
 "||"                    { 
-				DEBUG("or START");
+				DEBUG("or ");
 				DEBUG(yytext);
 				
 				FILTER( OR);    
@@ -206,141 +225,141 @@ FOR
 			}
 
 "="                     { 
-				DEBUG("assign START");
+				DEBUG("assign ");
 				DEBUG(yytext);
 				
 				FILTER( LET);    
 			}
 
 "true"                  { 
-				DEBUG("true START");
+				DEBUG("true ");
 				DEBUG(yytext);
 				
 				FILTER( TRUEVAL); 
 			}
 
 "false"                 { 
-				DEBUG("false START");
+				DEBUG("false ");
 				DEBUG(yytext);
 				
 				FILTER( FALSEVAL); 
 			}
 
 "extern"		{ 
-				DEBUG("extern START");
+				DEBUG("extern ");
 				DEBUG(yytext);
 				
 				FILTER( EXTERN ); 
 			}
 
 "export"		{ 
-				DEBUG("export START");
+				DEBUG("export ");
 				DEBUG(yytext);
 				
 				FILTER( EXPORT ); 
 			}
 
 "void"	  	  	{ 
-				DEBUG("void START");
+				DEBUG("void ");
 				DEBUG(yytext);
 				
 				FILTER( TYPE_VOID ); 
 			}
 
 "int"			{ 
-				DEBUG("int START");
+				DEBUG("int ");
 				DEBUG(yytext);
 				
 				FILTER( TYPE_INT ); 
 			}
 
 "bool"			{ 
-				DEBUG("bool START");
+				DEBUG("bool ");
 				DEBUG(yytext);
 				
 				FILTER( TYPE_BOOL ); 
 			}
 
 "float"			{
-				DEBUG("float START");
+				DEBUG("float ");
 				DEBUG(yytext);
 				
 				FILTER( TYPE_FLOAT ); 
 			}
 
 "return"		{ 
-				DEBUG("return START");
+				DEBUG("return ");
 				DEBUG(yytext);
 				
 				FILTER( RETURN ); 
 			}
 
 "{"			{ 
-				DEBUG("{ START");
+				DEBUG("{ ");
 				DEBUG(yytext);
 				
 				FILTER( FL_BRACKET_L  ); 
 			}
 
 "}"			{ 
-				DEBUG("} START");
+				DEBUG("} ");
 				DEBUG(yytext);
 				
 				FILTER( FL_BRACKET_R  ); 
 			}
 
 "["			{ 
-				DEBUG("[ START");
+				DEBUG("[ ");
 				DEBUG(yytext);
 				
 				FILTER( SQ_BRACKET_L ); 
 			}
 
 "]"			{ 
-				DEBUG("] START");
+				DEBUG("] ");
 				DEBUG(yytext);
 				
 				FILTER( SQ_BRACKET_R ); 
 			}
 
 "if"			{
-				DEBUG("if START");
+				DEBUG("if ");
 				DEBUG(yytext);
 				
 				 FILTER( IF ); 
 			}
 
 "do"			{
-				DEBUG("do START");
+				DEBUG("do ");
 				DEBUG(yytext);
 				
 				 FILTER( DO );
 			}
 
 "while"			{
-				DEBUG("while START");
+				DEBUG("while ");
 				DEBUG(yytext);
 				
 				 FILTER( WHILE ); 
 			}
 
 "for"			{ 
-				DEBUG("for START");
+				DEBUG("for ");
 				DEBUG(yytext);
 				
 				FILTER( FOR ); 
 			}
 
 [A-Za-z][A-Za-z0-9_]*   { 
-				DEBUG("line code START");
+				DEBUG("line code ");
 				DEBUG(yytext);
 				
-				yylval.id = STRcpy(yytext);
+				//yylval.id = STRcpy(yytext);
                              	FILTER( ID);
                         }
 
 [0-9]+                  { 
-				DEBUG("list number START");
+				DEBUG("list number ");
 				DEBUG(yytext);
 				
 				yylval.cint=atoi(yytext);
@@ -348,7 +367,7 @@ FOR
                         }
 
 [0-9]+(\.[0-9]+)*       { 
-				DEBUG("list float START");
+				DEBUG("list float ");
 				DEBUG(yytext);
 				
 				yylval.cint=atoi(yytext);
@@ -356,17 +375,33 @@ FOR
 			}
 
 \n.*                    { 
-				DEBUG("new linecount START");
+				DEBUG("new linecount ");
 				DEBUG(yytext);
 				
-				global.line += 1;
-                             	global.col = 0;
+				globals.line += 1;
+                             	globals.col = 0;
                              	yyless(1);
                         }
 
 [ \t]+                   { 
-				DEBUG("tab START");
+				DEBUG("tab ");
 				DEBUG(yytext);
 				
-				global.col += yyleng;
-                        } 
+				globals.col += yyleng;
+                        }
+%%
+
+int main(int argc, char **argv)
+{
+	FILE *pFile; 
+
+	if ( NULL == (pFile = fopen("./input.txt", "r" )) )
+	{
+		printf("Error opening the file\n");
+	}
+	yyin = pFile;
+
+	while ( yylex() );
+	printf("Done\n");
+	return 0;
+} 

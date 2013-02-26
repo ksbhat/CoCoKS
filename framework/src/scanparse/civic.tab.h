@@ -74,7 +74,8 @@
      IF = 292,
      DO = 293,
      WHILE = 294,
-     FOR = 295
+     FOR = 295,
+     NOT = 296
    };
 #endif
 /* Tokens.  */
@@ -116,7 +117,7 @@
 #define DO 293
 #define WHILE 294
 #define FOR 295
-
+#define NOT 296
 
 
 
