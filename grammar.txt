@@ -1,0 +1,37 @@
+1st March 2013:
+Expression grammar:
+
+/*
+ thir
+
+_n_Expr : _n_thirdleveloperations
+
+_n_thirdleveloperations : _n_binaryoperation
+
+_n_binaryoperation : _n_binaryoperation _n_binop _n_binaryoperation
+		   	| _n_monoperation _n_binop  _n_binaryoperation
+
+_n_monoperation : _n_monop _n_secondleveloperations
+
+_n_secondleveloperations : _n_casting 
+			|  _n_funcall
+			|  _n_arrayreferencing
+			|  _n_arrayindexing
+			|  _n_firstleveloperations
+
+_n_casting		: L_BRACKET _n_type R_BRACKET _n_secondleveloperations
+
+_n_funcall		: 
+
+.
+.
+.
+
+_n_firstleveloperations : _n_bracketgrouping
+			  | ID
+			  | _n_constants
+
+_n_bracketgrouping : L_BRACKET _n_Expr R_BRACKET
+
+
+
