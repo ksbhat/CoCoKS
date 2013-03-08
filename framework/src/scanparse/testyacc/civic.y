@@ -13,6 +13,12 @@
 #include "ctinfo.h"
 #include "free.h"
 #include "globals.h"
+#ifdef DEBUG
+	#define DEBUG(msg) \
+		printf("%s\t%s\n", "DEBUG",msg);
+#else
+	#define DEBUG(msg) ;
+#endif
 
 static node *parseresult = NULL;
 extern int yylex();
@@ -30,8 +36,11 @@ static int yyerror( char *errname);
 }
 
 %token BRACKET_L BRACKET_R COMMA SEMICOLON
-%token MINUS PLUS STAR SLASH PERCENT LE LT GE GT EQ NE OR AND
+%token LE LT GE GT EQ NE OR AND
 %token TRUEVAL FALSEVAL LET
+%left PLUS MINUS
+%left STAR SLASH PERCENT
+
 
 %token <cint> NUM
 %token <cflt> FLOAT
@@ -40,6 +49,7 @@ static int yyerror( char *errname);
 %token FL_BRACKET_L FL_BRAKCET_R SQ_BRACKET_L SQ_BRACKET_R
 %token IF FOR DO WHILE
 %token NOT
+%token testUnary
 %type <node> intval floatval boolval constant expr
 %type <node> assign varlet 
 %type <node> MonOp type
@@ -64,14 +74,34 @@ varlet: ID
 
 
 expr: testUnary
+	 
 
 testUnary : MonOp castExpression
+		{
+			DEBUG(" MONOP TESTUNARY");
+		}
+		| MINUS castExpression
+		{
+			DEBUG("MINUS TESTUNARY");
+		}
 		| BRACKET_L type BRACKET_R castExpression
+		{
+			DEBUG("BRACKET TESTUNARY");
+		}
 		| castExpression
+		{
+			DEBUG("CONSTANT TESTUNARY");
+		}
 		;
        
 castExpression : ID
+		{
+			DEBUG("ID CAST EXPRESSION");
+		}
 		|  constant
+		{
+			DEBUG("CONSTANT CAST EXPRESSION");
+		}
 		;     
 constant: floatval
 	  {
@@ -110,7 +140,6 @@ boolval: TRUEVAL
        ;
 
 binop: PLUS      { $$ = BO_add; }
-     | MINUS     { $$ = BO_sub; }
      | STAR      { $$ = BO_mul; }
      | SLASH     { $$ = BO_div; }
      | PERCENT   { $$ = BO_mod; }
@@ -123,8 +152,7 @@ binop: PLUS      { $$ = BO_add; }
      | AND       { $$ = BO_and; }
      ;
      
-MonOp: MINUS	{$$ = MO_neg;}
-	  |	NOT		{$$	= MO_not;}
+MonOp: NOT		{$$	= MO_not;}
 
 type:  TYPE_VOID		{$$ = T_void;}
 	 |TYPE_INT		{$$ = T_int;} 
