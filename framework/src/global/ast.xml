@@ -685,7 +685,7 @@
 				<son name="Statement">
 					<targets>
 						<target mandatory="yes">
-							<set name="Statement" />
+							<set name="Set_Statement" />
 							<phases>
 								<all />
 							</phases>
