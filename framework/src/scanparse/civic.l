@@ -328,6 +328,13 @@ NOT
 				
 				 FILTER( IF ); 
 			}
+"else"			{
+				DEBUG("if ");
+				DEBUG(yytext);
+				
+				 FILTER( IF ); 
+			}
+
 
 "do"			{
 				DEBUG("do ");
@@ -391,17 +398,3 @@ NOT
                         }
 %%
 
-int main(int argc, char **argv)
-{
-	FILE *pFile; 
-
-	if ( NULL == (pFile = fopen("./input.txt", "r" )) )
-	{
-		printf("Error opening the file\n");
-	}
-	yyin = pFile;
-
-	while ( yylex() );
-	printf("Done\n");
-	return 0;
-} 

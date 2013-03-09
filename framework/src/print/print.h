@@ -20,6 +20,38 @@ extern node *PRTfloat (node * arg_node, info * arg_info);
 extern node *PRTnum (node * arg_node, info * arg_info);
 extern node *PRTbool (node * arg_node, info * arg_info);
 extern node *PRTerror (node * arg_node, info * arg_info);
+extern node *PRTstatement(node * arg_node, info * arg_info);
+extern node *PRTprogram (node *arg_node, info * arg_info);
+extern node *PRTvardec (node *arg_node, info * arg_info);
+extern node *PRTparam (node *arg_node, info * arg_info);
+extern node *PRTfundec (node *arg_node, info * arg_info);
+extern node *PRTfundef (node *arg_node, info * arg_info);
+extern node *PRTparamlist (node *arg_node, info * arg_info);
+extern node *PRTfunheader (node *arg_node, info * arg_info);
+extern node *PRTlocalfundef (node *arg_node, info * arg_info);
+extern node *PRTfunbody (node *arg_node, info * arg_info);
+extern node *PRTlocalfundeflist (node *arg_node, info * arg_info);
+extern node *PRTglobaldef (node *arg_node, info * arg_info);
+extern node *PRTusualdef (node *arg_node, info * arg_info);
+extern node *PRTarraydef (node *arg_node, info * arg_info);
+extern node *PRTglobaldec (node *arg_node, info * arg_info);
+extern node *PRTvarnumlist (node *arg_node, info * arg_info);
+extern node *PRTvardeclist (node *arg_node, info * arg_info);
+extern node *PRTreturn (node *arg_node, info * arg_info);
+extern node *PRTstatementlist (node *arg_node, info * arg_info);
+extern node *PRTdowhilestat (node *arg_node, info * arg_info);
+extern node *PRTwhilestat (node *arg_node, info * arg_info);
+extern node *PRTforstat (node *arg_node, info * arg_info);
+extern node *PRTfuncall (node *arg_node, info * arg_info);
+extern node *PRTexprlist (node *arg_node, info * arg_info);
+extern node *PRTifstat (node *arg_node, info * arg_info);
+extern node *PRTelseblock (node *arg_node, info * arg_info);
+extern node *PRTmonop (node *arg_node, info * arg_info);
+extern node *PRTcast (node *arg_node, info * arg_info);
+extern node *PRTenclosedblock (node *arg_node, info * arg_info);
+
+
+
 
 extern node *PRTdoPrint( node *syntaxtree);
 

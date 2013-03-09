@@ -14,6 +14,14 @@
 #include "free.h"
 #include "globals.h"
 
+//#ifdef DEBUG
+	#define DEBUG(msg) \
+		printf("%s:\t%s\n", "DEBUG",msg);
+/*#else
+	#define DEBUG(msg) ;
+#endif
+*/
+
 static node *parseresult = NULL;
 extern int yylex();
 static int yyerror( char *errname);
@@ -26,76 +34,408 @@ static int yyerror( char *errname);
  int                 cint;
  float               cflt;
  binop               cbinop;
+ monop				 cmonop;
+ type				 ctype;
  node               *node;
 }
 
 %token BRACKET_L BRACKET_R COMMA SEMICOLON
-%token MINUS PLUS STAR SLASH PERCENT LE LT GE GT EQ NE OR AND
+%token LE LT GE GT EQ NE OR AND
+//priority from low to high
+%left OR
+%left AND
+%left EQ NE
+%left LT LE GE GT
+%left PLUS MINUS
+%left STAR SLASH PERCENT
+
 %token TRUEVAL FALSEVAL LET
 
 %token <cint> NUM
 %token <cflt> FLOAT
 %token <id> ID
-%token EXTERN EXPORT VOID INT BOOL FLOAT RETURN 
-%token FL_BRACKET_L FL_BRAKCET_R SQ_BRACKET_L SQ_BRACKET_R
-%token IF FOR DO WHILE
+%token EXTERN EXPORT TYPE_VOID TYPE_INT TYPE_BOOL TYPE_FLOAT RETURN 
+%token FL_BRACKET_L FL_BRACKET_R SQ_BRACKET_L SQ_BRACKET_R
+%token IF FOR DO WHILE ELSE 
 %token NOT
-%type <node> intval floatval boolval constant expr
-%type <node> assign varlet program
+%type <node> intval floatval boolval constant 
+//%type <node> assign varlet program
+%type <node> program expr 
+%type <node> codeblock globaldef setglobaldef usualdef initProgram
+%type <node> unaryandcast exprfunctioncall exprsequence groupedexpression
+%type <node> assign
+%type <node> block statementlist statement funcall fundef funheader param
+%type <node> paramsequence funbody vardeclist return vardec
+%type <node> conditionalstatement nonconditionalstatement matchedifelse
+%type <node> unmatchedif
 %type <cbinop> binop
+%type <cmonop> monOp
+%type <ctype> type
 
-%start program
+%start initProgram 
 
 %%
 
-program: instrs 
-         {
-           parseresult = $1;
-         }
-         ;
+initProgram :program
+	{
+		parseresult=$1;
+	}
+	;
 
-instrs: instr instrs
-        {
-          $$ = TBmakeInstrs( $1, $2);
-        }
-      | instr
-        {
-          $$ = TBmakeInstrs( $1, NULL);
-        }
-        ;
+program:codeblock 
+		{
 
-instr: assign
-       {
-         $$ = $1;
-       }
-       ;
+			$$=TBmakeProgram($1,NULL);
+			DEBUG("ACCEPT");
+		}
+		;
 
-assign: varlet LET expr SEMICOLON
-        {
-          $$ = TBmakeAssign( $1, $3);
-        }
-        ;
+codeblock:globaldef
+		{
+			$$=$1;
+		} 
+		|
+		fundef
+		{
+			$$=$1;
+		}
+		;
 
-varlet: ID
-        {
-          $$ = TBmakeVarlet( STRcpy( $1));
-        }
-        ;
+globaldef:setglobaldef
+		{
+			$$=TBmakeGlobaldef($1);
+		}
+		;
+setglobaldef:usualdef
+		{
+			$$=$1;
+		}
+		;
+
+usualdef:EXPORT type ID LET expr SEMICOLON
+		{
+			DEBUG("IN USUALDEF");
+			node* var=TBmakeVar(STRcpy($3),NULL);
+			DEBUG("BW IN USUALDEF");
+			$$=TBmakeUsualdef(FALSE,$2,var,$5);
+			DEBUG("AFTER IN USUALDEF");
+		}
+		;
+
+fundef: EXPORT funheader FL_BRACKET_L funbody FL_BRACKET_R
+	{
+		$$=TBmakeFundef(TRUE,$2,$4);
+	}
+	|
+	funheader FL_BRACKET_L funbody FL_BRACKET_R
+	{
+		$$=TBmakeFundef(FALSE,$1,$3);
+	}
+	;
+
+funheader:  type ID BRACKET_L paramsequence BRACKET_R
+	     {
+		node* var=TBmakeVar(STRcpy($2),NULL);
+		$$=TBmakeFunheader($1,var,$4);
+	     } 
+	     |
+	     TYPE_VOID ID BRACKET_L paramsequence BRACKET_R
+	     {
+		node* var=TBmakeVar(STRcpy($2),NULL);
+		$$=TBmakeFunheader(T_void,var,$4);
+	     } 
+	     |
+	     TYPE_VOID ID BRACKET_L BRACKET_R
+	     {
+		node* var=TBmakeVar(STRcpy($2),NULL);
+		$$=TBmakeFunheader(T_void,var, NULL);
+	     } 
+	     |
+	     type ID BRACKET_L BRACKET_R
+             {
+                node* var=TBmakeVar(STRcpy($2),NULL);
+                $$=TBmakeFunheader($1,var,NULL);
+             }
+		;
+
+paramsequence : paramsequence COMMA param
+                {
+                        DEBUG("PARAM SEQUENCE");
+                        $$=TBmakeParamlist($3,$1);
+                }
+              | param
+                {
+                        DEBUG("END oF PARAM SEQUENCE");
+                        $$=TBmakeExprlist($1,NULL);
+                }
+                ;
+
+param :type ID
+		{
+                	node* var=TBmakeVar(STRcpy($2),NULL);
+			$$=TBmakeParam($1,NULL,var);
+		}
+		;
 
 
-expr: constant
-      {
-        $$ = $1;
-      }
-    | ID
-      {
-        $$ = TBmakeVar( STRcpy( $1));
-      }
-    | BRACKET_L expr binop expr BRACKET_R
-      {
-        $$ = TBmakeBinop( $3, $2, $4);
-      }
-    ;
+funbody : vardeclist statementlist return
+	 {
+		DEBUG("IN Funbody with return");
+		$$=TBmakeFunbody($1,NULL,$2,$3);	
+		DEBUG("after Funbody with return");
+	 }	
+	|
+	  vardeclist statementlist
+	{
+		DEBUG("IN Funbody without return");
+		$$=TBmakeFunbody($1,NULL,$2,NULL);
+		DEBUG("after Funbody without return");
+	}
+
+
+return : RETURN expr SEMICOLON
+	{
+		$$=TBmakeReturn($2);
+	}
+	;
+
+vardeclist:vardec 
+		{
+			$$=TBmakeVardeclist($1,NULL);
+		}
+		|
+		vardeclist vardec 
+		{
+			$$=TBmakeVardeclist($2,$1);
+		}
+		;	
+
+
+vardec	: type ID LET expr SEMICOLON
+		{
+			DEBUG("IN VARDEC With initial");
+			node* var=TBmakeVar(STRcpy($2),NULL);
+			$$= TBmakeVardec($1,NULL,var,$4);
+		}
+		|
+	  type ID
+		{
+			DEBUG("IN VARDEC");
+			node* var=TBmakeVar(STRcpy($2),NULL);
+			$$= TBmakeVardec($1,NULL,var,NULL);
+		}
+		;
+	     
+
+assign: ID LET expr SEMICOLON
+		 {
+			DEBUG("IN ASSIGN");
+			node* var=TBmakeVar(STRcpy($1),NULL);
+		 	$$ = TBmakeAssign(var,$3);
+		 }
+		;
+
+block		: FL_BRACKET_L statementlist FL_BRACKET_R
+		{
+			DEBUG("IN BLOCK");
+			$$=TBmakeEnclosedblock($2);
+		}
+		;
+		
+statementlist:statement 
+		{
+			DEBUG("IN STATEMENT OF STATEMENTLIST");
+			$$=TBmakeStatementlist($1,NULL);
+		}
+		|
+		statementlist statement
+		{
+			DEBUG("IN STATEMENTLIST OF STATEMENTLIST");
+			$$=TBmakeStatementlist($2,$1);
+		}
+		;		
+
+statement :	conditionalstatement
+		{
+			DEBUG("IN CONDITIONAL STATEMENT");
+			$$=TBmakeStatement($1);	
+		}
+		;
+
+conditionalstatement :	matchedifelse
+		{
+			DEBUG("IN CONDITIONALSTATEMENT : MATCHEDIFELSE");
+			$$=$1;
+		}
+		|
+		unmatchedif
+		{
+			DEBUG("IN CONDITIONALSTATEMENT: UNMATCHEDIF");
+			$$=$1;
+		}
+		;
+		
+nonconditionalstatement: assign
+		{
+			DEBUG("IN NONCONDITIONAL : ASSIGN");
+			$$=$1;
+		}
+		|
+		funcall
+		{
+			DEBUG("IN NONCONDITIONAL : FUNCALL");
+			$$=$1;
+		}
+		;
+
+matchedifelse	:IF BRACKET_L expr BRACKET_R matchedifelse ELSE matchedifelse
+		{
+			DEBUG("IN MATCHEDIFELSE : IF()ELSE()");
+			node *elseblock = TBmakeElseblock($7);
+			$$=TBmakeIfstat($3 ,$5 , elseblock);
+		}
+		|nonconditionalstatement
+		{
+			DEBUG("IN MATCHEDIFELSE : NONCONDITIONALSTATEMENT");
+			node *statement = TBmakeStatement($1);
+			node *statementlist = TBmakeStatementlist(statement, NULL);
+			$$=TBmakeEnclosedblock(statementlist);
+		}
+		|block
+		{
+			DEBUG("IN MATCHEDIFELSE : BLOCK");
+			$$=$1;	
+		}
+		;
+
+unmatchedif	:	IF BRACKET_L expr BRACKET_R matchedifelse ELSE unmatchedif
+		{
+			DEBUG("IN UNMATCHEDIF : IF()ELSE()UNMATCHEDIF");
+			$$=TBmakeIfstat($3,$5,$7);
+		}
+		|	IF BRACKET_L expr BRACKET_R conditionalstatement
+		{
+			DEBUG("IN UNMATCHEDIF : IF() CONDITIONALSTATEMENT");
+			$$=TBmakeIfstat($3,$5,NULL);
+		}
+		;
+
+
+
+funcall:ID BRACKET_L exprsequence BRACKET_R SEMICOLON//function call
+                {
+                        DEBUG("FUNCTION CALL");
+                        node *var=TBmakeVar(STRcpy($1),NULL);
+                        $$=TBmakeFuncall(var,$3);
+                }       
+                | ID BRACKET_L BRACKET_R
+                {
+                        DEBUG("FUNCTION CALL");
+                        node *var=TBmakeVar(STRcpy($1),NULL);
+                        $$=TBmakeFuncall(var,NULL);
+                }
+		;
+
+
+
+expr: expr binop unaryandcast  
+		{
+			DEBUG("OTHER BINOP");
+			$$ = $1;
+		}
+	|
+	expr MINUS unaryandcast
+		{
+			DEBUG(" BINOP TESTMINUS");
+			binop symbol=BO_sub;
+			$$=TBmakeBinop(symbol,$1,$3);
+			
+		}
+	| unaryandcast
+		{
+			DEBUG(" UNARY AND CAST");
+			$$ = $1;
+		}
+		;
+	 
+
+unaryandcast : monOp exprfunctioncall 
+		{
+			DEBUG(" MONOP TESTUNARY");
+			if($2==NULL)
+			{
+				printf("inside MONOP NULL");
+				exit(1);	
+			}
+			$$ = TBmakeMonop($1,$2);
+			DEBUG(" AFTER MONOP TESTUNARY");
+		}
+		| MINUS exprfunctioncall
+		{
+			monop symbol=MO_neg;
+			DEBUG("MINUS TESTUNARY");
+			$$ = TBmakeMonop(symbol,$2);
+		}
+		| BRACKET_L type BRACKET_R exprfunctioncall //casting expression
+		{
+			DEBUG("BRACKET TESTUNARY");
+			$$ = TBmakeCast($2,$4);
+		}
+		| exprfunctioncall 
+		{
+			DEBUG("CONSTANT TESTUNARY");
+			$$ = $1;
+		}
+		;
+
+
+exprfunctioncall:ID BRACKET_L exprsequence BRACKET_R //function call
+		{
+			DEBUG("FUNCTION CALL");
+			node *var=TBmakeVar(STRcpy($1),NULL);
+			$$=TBmakeFuncall(var,$3);
+		}       
+		| ID BRACKET_L BRACKET_R
+		{
+			DEBUG("FUNCTION CALL");
+			node *var=TBmakeVar(STRcpy($1),NULL);
+			$$=TBmakeFuncall(var,NULL);
+		}
+		| groupedexpression
+		{
+			$$=$1;
+		}
+		;
+
+
+exprsequence : expr COMMA exprsequence
+		{
+			DEBUG("EXPR SEQUENCE");
+			$$=TBmakeExprlist($1,$3);
+		}
+	      | expr
+		{
+			DEBUG("END oF  EXPR SEQUENCE");
+			$$=TBmakeExprlist($1,NULL);
+		}
+	
+		;
+groupedexpression: BRACKET_L expr BRACKET_R
+		{
+			$$=$2;
+		}
+		| ID
+                {
+                        DEBUG("ID CAST EXPRESSION");
+                        $$ = TBmakeVar(STRcpy($1),NULL);
+
+                }
+                |  constant
+                {
+                        DEBUG("CONSTANT CAST EXPRESSION");
+                        $$=$1;
+                }
+                ;
 
 constant: floatval
           {
@@ -134,7 +474,6 @@ boolval: TRUEVAL
        ;
 
 binop: PLUS      { $$ = BO_add; }
-     | MINUS     { $$ = BO_sub; }
      | STAR      { $$ = BO_mul; }
      | SLASH     { $$ = BO_div; }
      | PERCENT   { $$ = BO_mod; }
@@ -147,16 +486,17 @@ binop: PLUS      { $$ = BO_add; }
      | AND       { $$ = BO_and; }
      ;
      
-monop: MINUS	{$$ = MO_neg;}
-	  |	NOT		{$$	= MO_not;}
+monOp: 	NOT		{$$	= MO_not;}
 
-type:  VOID		{$$ = T_void;}
-	 |INT		{$$ = T_int;} 
-	 |BOOL 		{$$ = T_bool;}
-	 |FLOAT 	{$$ = T_float;}
+
+type: 	 TYPE_INT		{$$ = T_int;} 
+	 |TYPE_BOOL 		{$$ = T_bool;}
+	 |TYPE_FLOAT 	{$$ = T_float;}
 
 	 
 %%
+
+
 
 static int yyerror( char *error)
 {
@@ -174,4 +514,5 @@ node *YYparseTree( void)
 
   DBUG_RETURN( parseresult);
 }
+
 

@@ -71,9 +71,9 @@ PRTinstrs (node * arg_node, info * arg_info)
 {
   DBUG_ENTER ("PRTinstrs");
 
-  INSTRS_INSTR( arg_node) = TRAVdo( INSTRS_INSTR( arg_node), arg_info);
+  //INSTRS_INSTR( arg_node) = TRAVdo( INSTRS_INSTR( arg_node), arg_info);
   
-  INSTRS_NEXT( arg_node) = TRAVopt( INSTRS_NEXT( arg_node), arg_info);
+  //INSTRS_NEXT( arg_node) = TRAVopt( INSTRS_NEXT( arg_node), arg_info);
   
   DBUG_RETURN (arg_node);
 }
@@ -364,6 +364,135 @@ PRTerror (node * arg_node, info * arg_info)
 
 
 
+node *PRTstatement(node * arg_node, info * arg_info)
+{
+	return arg_node;
+}
+
+node *PRTprogram (node *arg_node, info * arg_info)
+{
+	printf("inside program");
+	PROGRAM_CODEBLOCK(arg_node) =TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
+	PROGRAM_NEXT(arg_node) =TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
+	return arg_node;
+}
+
+node *PRTvardec (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTparam (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+
+node *PRTfundec (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTfundef (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTparamlist (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTfunheader (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTlocalfundef (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTfunbody (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTlocalfundeflist (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTglobaldef (node *arg_node, info * arg_info)
+{
+	printf("inside program");
+	GLOBALDEF_SET_GLOBALDEF(arg_node) =TRAVdo(GLOBALDEF_SET_GLOBALDEF(arg_node),arg_info);
+	PROGRAM_NEXT(arg_node) =TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
+	return arg_node;
+}
+node *PRTusualdef (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTarraydef (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTglobaldec (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTvarnumlist (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTvardeclist (node *arg_node, info * arg_info)
+{
+	return arg_node;
+
+}
+node *PRTreturn (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTstatementlist (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTdowhilestat (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTwhilestat (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTforstat (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTfuncall (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTexprlist (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTifstat (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTelseblock (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTmonop (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTcast (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+node *PRTenclosedblock (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
+
+
+
 /** <!-- ****************************************************************** -->
  * @brief Prints the given syntaxtree
  * 
@@ -401,3 +530,6 @@ node
 /**
  * @}
  */
+
+
+
