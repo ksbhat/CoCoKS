@@ -14,30 +14,30 @@
 
 #ifdef DEBUG
 	#define DEBUG(msg) \
-		printf("%s:l:%d,c:%d\t%s\n", "DEBUG",globals.line, globals.col,msg);
+		printf("%s:l:%d,c:%d\t%s\n", "DEBUG",global.line, global.col,msg);
 #else
 	#define DEBUG(msg) ;
 #endif
 
 #define FILTER(token) \
-  globals.col += yyleng;  \
+  global.col += yyleng;  \
   return( token);
 
 #define INC_LINECNT() \
-  globals.line += 1;   \
-  globals.col = 0;     \
+  global.line += 1;   \
+  global.col = 0;     \
   yyless(1);     
 
 #define LINEBUF_SIZE 256
 #define YY_NO_UNPUT
-
+/*
 struct Global
 {
   int line;
   int col;
-} globals;
+} global;
 
-
+*/
 /*************************************
 TOKENS declared in the parser
 *************************************
@@ -97,7 +97,7 @@ NOT
 				DEBUG("COMMENT line");
 				DEBUG(yytext);
 				
-				 globals.col += yyleng;
+				 global.col += yyleng;
 			}
 "("                     { 
 				DEBUG("Simple Bracket");
@@ -385,8 +385,8 @@ NOT
 				DEBUG("new linecount ");
 				DEBUG(yytext);
 				
-				globals.line += 1;
-                             	globals.col = 0;
+				global.line += 1;
+                             	global.col = 0;
                              	yyless(1);
                         }
 
@@ -394,7 +394,7 @@ NOT
 				DEBUG("tab ");
 				DEBUG(yytext);
 				
-				globals.col += yyleng;
+				global.col += yyleng;
                         }
 %%
 
