@@ -411,7 +411,7 @@
 				</son>
 				<son name="Return">
 					<targets>
-						<target mandatory="yes">
+						<target mandatory="no">
 							<node name="Return" />
 							<phases>
 								<all />
