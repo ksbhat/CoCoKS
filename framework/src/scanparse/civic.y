@@ -218,7 +218,7 @@ vardec	: type ID LET expr SEMICOLON
 			$$= TBmakeVardec($1,NULL,var,$4);
 		}
 		|
-	  type ID
+	  type ID SEMICOLON
 		{
 			DEBUG("IN VARDEC");
 			node* var=TBmakeVar(STRcpy($2),NULL);
@@ -325,14 +325,18 @@ unmatchedif	:	IF BRACKET_L expr BRACKET_R matchedifelse ELSE unmatchedif
 funcall:ID BRACKET_L exprsequence BRACKET_R SEMICOLON//function call
                 {
                         DEBUG("FUNCTION CALL");
+			printf("the value %d",$1);
                         node *var=TBmakeVar(STRcpy($1),NULL);
                         $$=TBmakeFuncall(var,$3);
                 }       
-                | ID BRACKET_L BRACKET_R
+                |ID BRACKET_L BRACKET_R SEMICOLON
                 {
-                        DEBUG("FUNCTION CALL");
-                        node *var=TBmakeVar(STRcpy($1),NULL);
-                        $$=TBmakeFuncall(var,NULL);
+                        DEBUG("FUNCTION CALL WITHOUT PARAM");
+			printf("the value %d",$1);
+                        node *var1=TBmakeVar(STRcpy($1),NULL);
+			DEBUG("AFTER CREATING VAR");
+                        $$=TBmakeFuncall(var1,NULL);
+			DEBUG("ABOUT TO EXIT");
                 }
 		;
 
