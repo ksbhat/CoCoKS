@@ -56,7 +56,9 @@ static int yyerror( char *errname);
 %token <id> ID
 %token EXTERN EXPORT TYPE_VOID TYPE_INT TYPE_BOOL TYPE_FLOAT RETURN 
 %token FL_BRACKET_L FL_BRACKET_R SQ_BRACKET_L SQ_BRACKET_R
-%token IF FOR DO WHILE ELSE 
+%token FOR DO WHILE  
+%nonassoc IF
+%nonassoc ELSE
 %token NOT
 %type <node> intval floatval boolval constant 
 //%type <node> assign varlet program
@@ -66,8 +68,7 @@ static int yyerror( char *errname);
 %type <node> assign
 %type <node> block statementlist statement funcall fundef funheader param
 %type <node> paramsequence funbody vardeclist return vardec
-%type <node> conditionalstatement nonconditionalstatement matchedifelse
-%type <node> unmatchedif
+%type <node> ifblock elseblock whileblock dowhileblock forblock forinitstat
 %type <cbinop> binop
 %type <cmonop> monOp
 %type <ctype> type
@@ -230,14 +231,20 @@ vardec	: type ID LET expr SEMICOLON
 assign: ID LET expr SEMICOLON
 		 {
 			DEBUG("IN ASSIGN");
-			node* var=TBmakeVar(STRcpy($1),NULL);
-		 	$$ = TBmakeAssign(var,$3);
+			node* varlet=TBmakeVarlet(STRcpy($1),NULL);
+		 	$$ = TBmakeAssign(varlet,$3);
 		 }
 		;
 
-block		: FL_BRACKET_L statementlist FL_BRACKET_R
+
+block		:statement
 		{
 			DEBUG("IN BLOCK");
+			$$=$1;
+		}
+		| FL_BRACKET_L statementlist FL_BRACKET_R
+		{
+			DEBUG("IN Enclosed BLOCK");
 			$$=TBmakeEnclosedblock($2);
 		}
 		;
@@ -255,84 +262,109 @@ statementlist:statement
 		}
 		;		
 
-statement :	conditionalstatement
-		{
-			DEBUG("IN CONDITIONAL STATEMENT");
-			$$=TBmakeStatement($1);	
-		}
-		;
-
-conditionalstatement :	matchedifelse
-		{
-			DEBUG("IN CONDITIONALSTATEMENT : MATCHEDIFELSE");
-			$$=$1;
-		}
-		|
-		unmatchedif
-		{
-			DEBUG("IN CONDITIONALSTATEMENT: UNMATCHEDIF");
-			$$=$1;
-		}
-		;
 		
-nonconditionalstatement: assign
+statement: assign
 		{
 			DEBUG("IN NONCONDITIONAL : ASSIGN");
-			$$=$1;
+			$$=TBmakeStatement($1);
 		}
 		|
 		funcall
 		{
 			DEBUG("IN NONCONDITIONAL : FUNCALL");
-			$$=$1;
+			$$=TBmakeStatement($1);
+		}
+		|
+		ifblock
+		{
+			DEBUG("IN NONCONDITIONAL : IFBlock");
+			$$=TBmakeStatement($1);
+		
+		}
+		|
+		whileblock
+		{
+			DEBUG("IN NONCONDITIONAL : WHILEBlock");
+			$$=TBmakeStatement($1);
+		}
+		|
+		dowhileblock
+		{
+			DEBUG("IN NONCONDITIONAL : DO WHILE Block");
+			$$=TBmakeStatement($1);
+		}
+		|
+		forblock
+		{
+			DEBUG("IN NONCONDITIONAL : FOR Block");
+			$$=TBmakeStatement($1);
 		}
 		;
 
-matchedifelse	:IF BRACKET_L expr BRACKET_R matchedifelse ELSE matchedifelse
+ifblock:IF BRACKET_L expr BRACKET_R block elseblock
 		{
-			DEBUG("IN MATCHEDIFELSE : IF()ELSE()");
-			node *elseblock = TBmakeElseblock($7);
-			$$=TBmakeIfstat($3 ,$5 , elseblock);
-		}
-		|nonconditionalstatement
+			DEBUG("IN IFELSEBLOCK");
+			$$=TBmakeIfstat($3,$5,$6);
+		} 
+		|
+	IF BRACKET_L expr BRACKET_R block %prec IF
 		{
-			DEBUG("IN MATCHEDIFELSE : NONCONDITIONALSTATEMENT");
-			node *statement = TBmakeStatement($1);
-			node *statementlist = TBmakeStatementlist(statement, NULL);
-			$$=TBmakeEnclosedblock(statementlist);
-		}
-		|block
-		{
-			DEBUG("IN MATCHEDIFELSE : BLOCK");
-			$$=$1;	
-		}
-		;
-
-unmatchedif	:	IF BRACKET_L expr BRACKET_R matchedifelse ELSE unmatchedif
-		{
-			DEBUG("IN UNMATCHEDIF : IF()ELSE()UNMATCHEDIF");
-			$$=TBmakeIfstat($3,$5,$7);
-		}
-		|	IF BRACKET_L expr BRACKET_R conditionalstatement
-		{
-			DEBUG("IN UNMATCHEDIF : IF() CONDITIONALSTATEMENT");
+			DEBUG("IN IFBLOCK");
 			$$=TBmakeIfstat($3,$5,NULL);
 		}
 		;
+elseblock: ELSE block
+		{
+			DEBUG("IN ELSE BLOCK");
+			$$=TBmakeElseblock($2);
+		}
+		;
+
+whileblock 	:	WHILE BRACKET_L expr BRACKET_R block 
+		{
+			DEBUG("IN WHILE BLOCK");
+			$$=TBmakeWhilestat($3, $5);
+		}
+		;
+
+dowhileblock	:	DO block WHILE BRACKET_L expr BRACKET_R SEMICOLON
+		{
+			DEBUG("IN DO WHILE BLOCK");
+			$$=TBmakeDowhilestat($2, $5);
+		}
+		;	
+
+forblock	:	FOR BRACKET_L forinitstat COMMA expr COMMA expr BRACKET_R block
+		{
+			DEBUG("IN FOR LOOP");
+			$$=TBmakeForstat($3, $5, $7, $9);
+		}
+		|	FOR BRACKET_L forinitstat COMMA expr  BRACKET_R block
+		{
+			DEBUG("IN FOR LOOP WITHOUT STEP");
+			$$=TBmakeForstat($3, $5, NULL, $7);
+		}
+		;
 
 
+forinitstat	:	TYPE_INT ID LET expr
+		{
+			DEBUG("IN FOR VARDEC PART");
+			node* var=TBmakeVar(STRcpy($2),NULL);
+			$$=TBmakeVardec(T_int, NULL, var, $4);
+		}
+		;
 
 funcall:ID BRACKET_L exprsequence BRACKET_R SEMICOLON//function call
                 {
                         DEBUG("FUNCTION CALL");
-			printf("the value %d",$1);
                         node *var=TBmakeVar(STRcpy($1),NULL);
                         $$=TBmakeFuncall(var,$3);
                 }       
                 |ID BRACKET_L BRACKET_R SEMICOLON
                 {
                         DEBUG("FUNCTION CALL WITHOUT PARAM");
-			printf("the value %d",$1);
+			printf("the value %s",$1);
                         node *var1=TBmakeVar(STRcpy($1),NULL);
 			DEBUG("AFTER CREATING VAR");
                         $$=TBmakeFuncall(var1,NULL);

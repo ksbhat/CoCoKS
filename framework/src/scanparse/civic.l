@@ -332,7 +332,7 @@ NOT
 				DEBUG("if ");
 				DEBUG(yytext);
 				
-				 FILTER( IF ); 
+				 FILTER( ELSE ); 
 			}
 
 
@@ -361,7 +361,7 @@ NOT
 				DEBUG("line code ");
 				DEBUG(yytext);
 				
-				//yylval.id = STRcpy(yytext);
+				yylval.id = STRcpy(yytext);
                              	FILTER( ID);
                         }
 
