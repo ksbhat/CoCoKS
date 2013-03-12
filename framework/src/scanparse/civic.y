@@ -63,7 +63,8 @@ static int yyerror( char *errname);
 %type <node> assign fundec globaldec exportfundef funbodyleft funbodyright
 %type <node> block statementlist statement funcall localfundef funheader param
 %type <node> paramsequence funbody localfundeflist vardeclist return vardec
-%type <node> ifblock elseblock whileblock dowhileblock forblock forinitstat
+%type <node> ifblock elseblock whileblock dowhileblock forblock forinitstat 
+%type <node> arrayindexing varnumsequence arraydef
 %type <cbinop> binop
 %type <cmonop> monOp
 %type <ctype> type
@@ -144,23 +145,76 @@ setglobaldef 		:	usualdef
 					DEBUG("IN GLOBALDEF: usualdef");
 					$$=$1;
 				}
+				|
+				arraydef
+				{
+					DEBUG("IN GLOBALDEF: arraydef");
+					$$=$1;
+				}
 				;
 
 usualdef 		:	EXPORT type ID LET expr SEMICOLON
 				{
 					DEBUG("IN USUALDEF");
 					node* var=TBmakeVar(STRcpy($3),NULL);
-					$$=TBmakeUsualdef(FALSE,$2,var,$5);
+					$$=TBmakeUsualdef(TRUE,$2,var,$5);
+				}
+				|EXPORT type ID SEMICOLON
+				{
+					DEBUG("IN USUALDEF");
+					node* var=TBmakeVar(STRcpy($3),NULL);
+					$$=TBmakeUsualdef(TRUE,$2,var,NULL);
+				}
+				;
+				;
+
+arraydef 		:	EXPORT type SQ_BRACKET_L exprsequence SQ_BRACKET_R ID SEMICOLON
+				{
+					DEBUG("IN ARRAYDEF");
+					node* var=TBmakeVar(STRcpy($6),NULL);
+					$$=TBmakeArraydef(TRUE,$2,$4,var);
 				}
 				;
 
-globaldec		:	EXTERN type ID
+globaldec		:	EXTERN type ID SEMICOLON
 				{
 					DEBUG("IN GLOBALDEC");
 			               	node* var=TBmakeVar(STRcpy($3), NULL);
 					$$=TBmakeGlobaldec($2, TRUE, NULL, var);
 				}
+				| EXTERN type SQ_BRACKET_L varnumsequence SQ_BRACKET_R ID SEMICOLON
+				{
+					DEBUG("IN GLOBALDEC : ARRAYS");
+			               	node* var=TBmakeVar(STRcpy($6), NULL);
+					$$=TBmakeGlobaldec($2, TRUE, $4, var);
+					
+				}
 				;
+
+
+varnumsequence 		: 	varnumsequence COMMA ID
+                		{
+                        		DEBUG("PARAM SEQUENCE");
+					node* var=TBmakeVar(STRcpy($3), NULL);
+                  		      	$$=TBmakeVarnumlist(var,$1);
+                		}
+	            		|
+	            		varnumsequence COMMA intval
+                		{
+                        		DEBUG("END oF PARAM SEQUENCE");
+                  		      	$$=TBmakeVarnumlist($3,$1);
+                		}
+				| intval
+				{
+                        		DEBUG("END oF PARAM SEQUENCE");
+                  		      	$$=TBmakeVarnumlist($1,NULL);
+				}
+				| ID
+				{
+					node* var=TBmakeVar(STRcpy($1), NULL);
+                  		      	$$=TBmakeVarnumlist(var, NULL);
+				}
+                		;
 
 exportfundef		: 	EXPORT localfundef //funheader FL_BRACKET_L funbody FL_BRACKET_R
 				{
@@ -230,7 +284,7 @@ paramsequence 		: 	paramsequence COMMA param
 	            		param
                 		{
                         		DEBUG("END oF PARAM SEQUENCE");
-                        		$$=TBmakeExprlist($1,NULL);
+                        		$$=TBmakeParamlist($1,NULL);
                 		}
                 		;
 
@@ -239,6 +293,12 @@ param 			:	type ID
 			               	node* var=TBmakeVar(STRcpy($2),NULL);
 					$$=TBmakeParam($1,NULL,var);
 				}
+				|
+				type SQ_BRACKET_L varnumsequence SQ_BRACKET_R ID
+				{
+			               	node* var=TBmakeVar(STRcpy($5),NULL);
+					$$=TBmakeParam($1,$3,var);
+				}				
 				;
 
 funbody			:	funbodyleft funbodyright	
@@ -258,6 +318,7 @@ funbody			:	funbodyleft funbodyright
 					{
 						MEMfree($1);
 						MEMfree($2);
+						$$=NULL;
 					}
 				}
 				;
@@ -266,9 +327,9 @@ funbodyleft		:	FL_BRACKET_L vardeclist localfundeflist
 				{
 					$$=TBmakeFunbody($2, $3, NULL, NULL);
 				}
-				| FL_BRACKET_L
+				| FL_BRACKET_L vardeclist 
 				{
-					$$=TBmakeFunbody(NULL, NULL, NULL, NULL);
+					$$=TBmakeFunbody($2, NULL, NULL, NULL);
 				}
 				;
 
@@ -297,14 +358,18 @@ return 			:	RETURN expr SEMICOLON
 				}
 				;
 
-vardeclist 		:	vardec 
+vardeclist 		:	vardeclist vardec
 				{
-					$$=TBmakeVardeclist($1,NULL);
-				}
-				|
-				vardeclist vardec 
-				{
+					DEBUG("IN VARDECLIST");
 					$$=TBmakeVardeclist($2,$1);
+					DEBUG("AFTER VARDECLIST");
+				}
+				| 
+				/* empty epsilon */ ////vardec
+				{	//nothing
+					DEBUG("IN VARDECLIST: EPSILON");
+					////$$=TBmakeVardeclist($1, NULL);
+					$$=NULL;
 				}
 				;	
 
@@ -321,13 +386,34 @@ vardec			: 	type ID LET expr SEMICOLON
 					node* var=TBmakeVar(STRcpy($2),NULL);
 					$$= TBmakeVardec($1,NULL,var,NULL);
 				}
+				|
+			 	type SQ_BRACKET_L exprsequence SQ_BRACKET_R ID LET expr SEMICOLON
+				{
+					DEBUG("IN VARDEC With initial, for arrays");
+					node* var=TBmakeVar(STRcpy($5),NULL);
+					$$= TBmakeVardec($1,$3,var,$7);
+				}
+				|
+				type SQ_BRACKET_L exprsequence SQ_BRACKET_R ID SEMICOLON
+				{
+					DEBUG("IN VARDEC, for arrays");
+					node* var=TBmakeVar(STRcpy($5),NULL);
+					$$= TBmakeVardec($1,$3,var,NULL);
+				}
 				;
 	     
 assign 			: 	ID LET expr SEMICOLON
 				{
 					DEBUG("IN ASSIGN");
-					node* varlet=TBmakeVarlet(STRcpy($1),NULL);
-				 	$$ = TBmakeAssign(varlet,$3);
+					node* var=TBmakeVar(STRcpy($1),NULL);
+				 	$$ = TBmakeAssign(var,$3);
+				}
+			 	|
+				ID SQ_BRACKET_L exprsequence SQ_BRACKET_R  LET expr SEMICOLON
+				{
+					DEBUG("IN ASSIGN: arrays");
+					node* var=TBmakeVar(STRcpy($1),$3);
+				 	$$ = TBmakeAssign(var,$6);
 				}
 				;
 
@@ -465,7 +551,7 @@ funcall 		:	ID BRACKET_L exprsequence BRACKET_R SEMICOLON//function call
 expr 			:	expr binop unaryandcast  
 				{
 					DEBUG("OTHER BINOP");
-					$$ = $1;
+					$$ = TBmakeBinop($2, $1, $3);
 				}
 				|
 				expr MINUS unaryandcast
@@ -486,13 +572,7 @@ expr 			:	expr binop unaryandcast
 unaryandcast 		: 	monOp exprfunctioncall 
 				{
 					DEBUG(" MONOP TESTUNARY");
-					if($2==NULL)
-					{
-						printf("inside MONOP NULL");
-						exit(1);	
-					}
 					$$ = TBmakeMonop($1,$2);
-					DEBUG(" AFTER MONOP TESTUNARY");
 				}
 				| MINUS exprfunctioncall
 				{
@@ -509,6 +589,11 @@ unaryandcast 		: 	monOp exprfunctioncall
 				{
 					DEBUG("CONSTANT TESTUNARY");
 					$$ = $1;
+				}
+				| arrayindexing
+				{
+					DEBUG("ARRAY INDEXING LEVEL");
+					$$=$1;
 				}
 				;
 
@@ -529,6 +614,14 @@ exprfunctioncall	:	ID BRACKET_L exprsequence BRACKET_R //function call
 					$$=$1;
 				}
 				;
+
+arrayindexing		:	ID SQ_BRACKET_L exprsequence SQ_BRACKET_R
+				{
+					DEBUG("ARRAY INDEXING");
+					$$=TBmakeVar($1, $3);
+				}
+				;
+
 
 exprsequence 		:	expr COMMA exprsequence
 				{
@@ -598,6 +691,7 @@ binop 			:	PLUS		{ $$ = BO_add; }
 				| STAR      	{ $$ = BO_mul; }
 				| SLASH         { $$ = BO_div; }
 				| PERCENT       { $$ = BO_mod; }
+				| NE            { $$ = BO_ne; }
 				| LE            { $$ = BO_le; }
 				| LT            { $$ = BO_lt; }
 				| GE            { $$ = BO_ge; }

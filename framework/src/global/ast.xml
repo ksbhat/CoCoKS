@@ -969,10 +969,10 @@
 
 		<node name="Assign">
 			<sons>
-				<son name="Let">
+				<son name="Var">
 					<targets>
 						<target mandatory="no">
-							<node name="VarLet" />
+							<node name="Var" />
 							<phases>
 								<all />
 							</phases>

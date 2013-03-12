@@ -97,8 +97,8 @@ PRTassign (node * arg_node, info * arg_info)
 {
   DBUG_ENTER ("PRTassign");
 
-  if (ASSIGN_LET( arg_node) != NULL) {
-    ASSIGN_LET( arg_node) = TRAVdo( ASSIGN_LET( arg_node), arg_info);
+  if (ASSIGN_VAR( arg_node) != NULL) {
+    ASSIGN_VAR( arg_node) = TRAVdo( ASSIGN_VAR( arg_node), arg_info);
     printf( " = ");
   }
   
