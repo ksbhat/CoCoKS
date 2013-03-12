@@ -371,9 +371,10 @@ node *PRTstatement(node * arg_node, info * arg_info)
 
 node *PRTprogram (node *arg_node, info * arg_info)
 {
-	printf("inside program");
+/*	printf("inside program");
 	PROGRAM_CODEBLOCK(arg_node) =TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
 	PROGRAM_NEXT(arg_node) =TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
+*/
 	return arg_node;
 }
 
@@ -416,10 +417,10 @@ node *PRTlocalfundeflist (node *arg_node, info * arg_info)
 }
 node *PRTglobaldef (node *arg_node, info * arg_info)
 {
-	printf("inside program");
+/*	printf("inside program");
 	GLOBALDEF_SET_GLOBALDEF(arg_node) =TRAVdo(GLOBALDEF_SET_GLOBALDEF(arg_node),arg_info);
 	PROGRAM_NEXT(arg_node) =TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
-	return arg_node;
+*/	return arg_node;
 }
 node *PRTusualdef (node *arg_node, info * arg_info)
 {
@@ -490,7 +491,10 @@ node *PRTenclosedblock (node *arg_node, info * arg_info)
 {
 	return arg_node;
 }
-
+node *PRTvardeclistlocalfundef (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
 
 
 /** <!-- ****************************************************************** -->

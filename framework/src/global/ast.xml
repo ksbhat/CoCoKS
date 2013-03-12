@@ -36,7 +36,8 @@
 			<!-- "Declaration" from the civic manual -->
 			<target>
 				<node name="FunDec" />
-				<node name="FunDef" />
+				<node name="VardeclistLocalFunDef" />
+				<node name="Fundef"/>
 				<node name="GlobalDec" />
 				<node name="GlobalDef" />
 			</target>
@@ -218,7 +219,30 @@
 			</attributes>
 		</node>
 
-
+		<node name="VardeclistLocalFundef">
+			<sons>
+				<son name="Vardeclist">
+					<targets>
+						<target mandatory="no">
+							<node name="Vardeclist" />
+							<phases>
+								<all />
+							</phases>
+						</target>
+					</targets>
+				</son>
+				<son name="LocalFundef">
+					<targets>
+						<target mandatory="no">
+							<node name="LocalFundef" />
+							<phases>
+								<all />
+							</phases>
+						</target>
+					</targets>
+				</son>
+			</sons>
+		</node>
 
 		<node name="FunDec">
 			<sons>
@@ -314,6 +338,7 @@
 		</node>
 
 		<node name="FunDef">
+			<!-- commented to be removed later
 			<sons>
 
 				<son name="FunHeader">
@@ -330,6 +355,19 @@
 					<targets>
 						<target mandatory="yes">
 							<node name="FunBody" />
+							<phases>
+								<all />
+							</phases>
+						</target>
+					</targets>
+				</son>
+			</sons>
+			-->
+			<sons>
+				<son name="LocalFunDef">
+					<targets>
+						<target mandatory="yes">
+							<node name="LocalFunDef" />
 							<phases>
 								<all />
 							</phases>
