@@ -50,7 +50,7 @@ extern node *PRTmonop (node *arg_node, info * arg_info);
 extern node *PRTcast (node *arg_node, info * arg_info);
 extern node *PRTenclosedblock (node *arg_node, info * arg_info);
 extern node *PRTvardeclistlocalfundef(node *arg_node, info * arg_info);
-
+extern node *PRTarrayinit(node *arg_node, info * arg_info);
 
 
 extern node *PRTdoPrint( node *syntaxtree);

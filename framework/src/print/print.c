@@ -22,7 +22,6 @@
 #include "memory.h"
 #include "globals.h"
 
-
 /*
  * INFO structure
  */
@@ -31,6 +30,7 @@ struct INFO {
 };
 
 #define INFO_FIRSTERROR(n) ((n)->firsterror)
+#define PRINTNODE(msg)	printf("=>\t%s\n", msg);
 
 static info *MakeInfo()
 {
@@ -50,34 +50,6 @@ static info *FreeInfo( info *info)
 
   return info;
 }
-
-
-
-/** <!--******************************************************************-->
- *
- * @fn PRTinstr
- *
- * @brief Prints the node and its sons/attributes
- *
- * @param arg_node BinOp node to process
- * @param arg_info pointer to info structure
- *
- * @return processed node
- *
- ***************************************************************************/
-
-node *
-PRTinstrs (node * arg_node, info * arg_info)
-{
-  DBUG_ENTER ("PRTinstrs");
-
-  //INSTRS_INSTR( arg_node) = TRAVdo( INSTRS_INSTR( arg_node), arg_info);
-  
-  //INSTRS_NEXT( arg_node) = TRAVopt( INSTRS_NEXT( arg_node), arg_info);
-  
-  DBUG_RETURN (arg_node);
-}
-
 
 /** <!--******************************************************************-->
  *
@@ -292,29 +264,6 @@ PRTvar (node * arg_node, info * arg_info)
 
 /** <!--******************************************************************-->
  *
- * @fn PRTvarlet
- *
- * @brief Prints the node and its sons/attributes
- *
- * @param arg_node letrec node to process
- * @param arg_info pointer to info structure
- *
- * @return processed node
- *
- ***************************************************************************/
-
-node *
-PRTvarlet (node * arg_node, info * arg_info)
-{
-  DBUG_ENTER ("PRTvarlet");
-
-  printf( "%s", VARLET_NAME( arg_node));
-
-  DBUG_RETURN (arg_node);
-}
-
-/** <!--******************************************************************-->
- *
  * @fn PRTerror
  *
  * @brief Prints the node and its sons/attributes
@@ -371,11 +320,15 @@ node *PRTstatement(node * arg_node, info * arg_info)
 
 node *PRTprogram (node *arg_node, info * arg_info)
 {
-/*	printf("inside program");
+	DBUG_ENTER("Program");
+
+	PRINTNODE("Program");
+
 	PROGRAM_CODEBLOCK(arg_node) =TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
-	PROGRAM_NEXT(arg_node) =TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
-*/
-	return arg_node;
+	
+	PROGRAM_NEXT(arg_node) =TRAVopt(PROGRAM_NEXT(arg_node),arg_info);
+
+  	DBUG_RETURN (arg_node);
 }
 
 node *PRTvardec (node *arg_node, info * arg_info)
@@ -417,14 +370,26 @@ node *PRTlocalfundeflist (node *arg_node, info * arg_info)
 }
 node *PRTglobaldef (node *arg_node, info * arg_info)
 {
-/*	printf("inside program");
-	GLOBALDEF_SET_GLOBALDEF(arg_node) =TRAVdo(GLOBALDEF_SET_GLOBALDEF(arg_node),arg_info);
-	PROGRAM_NEXT(arg_node) =TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
-*/	return arg_node;
+	DBUG_ENTER ("PRTglobaldef");
+
+	PRINTNODE("global def");
+
+  	GLOBALDEF_SET_GLOBALDEF( arg_node) = TRAVdo( GLOBALDEF_SET_GLOBALDEF(arg_node), arg_info);
+
+  	DBUG_RETURN (arg_node);
 }
 node *PRTusualdef (node *arg_node, info * arg_info)
 {
-	return arg_node;
+        /*DBUG_ENTER("PRTusualdef");
+
+        PRINTNODE("Usualdef");
+
+        _CODEBLOCK(arg_node) =TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
+
+        PROGRAM_NEXT(arg_node) =TRAVopt(PROGRAM_NEXT(arg_node),arg_info);
+*/
+        DBUG_RETURN (arg_node);
+
 }
 node *PRTarraydef (node *arg_node, info * arg_info)
 {
@@ -495,7 +460,10 @@ node *PRTvardeclistlocalfundef (node *arg_node, info * arg_info)
 {
 	return arg_node;
 }
-
+node *PRTarrayinit (node *arg_node, info * arg_info)
+{
+	return arg_node;
+}
 
 /** <!-- ****************************************************************** -->
  * @brief Prints the given syntaxtree

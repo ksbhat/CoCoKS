@@ -49,6 +49,7 @@
 				<node name="Cast" />
 				<node name="Var" />
 				<node name="FunCall" />
+				<node name="ArrayInit" />
 				<node name="Num" />
 				<node name="Float" />
 				<node name="Bool" />
@@ -1058,6 +1059,21 @@
 				</attribute>
 			</attributes>
 		</node>
+		<node name="ArrayInit">
+			<sons>
+				<son name="ExprList">
+					<targets>
+						<target mandatory="yes">
+							<node name="ExprList" />
+							<phases>
+								<all />
+							</phases>
+						</target>
+					</targets>
+				</son>
+			</sons>
+			<attributes />
+		</node>
 		<node name="Cast">
 			<sons>
 
@@ -1089,7 +1105,7 @@
 		</node>
 
 
-
+		<!--
 		<node name="VarLet">
 			<sons>
 				<son name="ExprList">
@@ -1130,6 +1146,7 @@
 				</attribute>
 			</attributes>
 		</node>
+		-->
 		<node name="Var">
 			<sons>
 				<son name="ExprList">

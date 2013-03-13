@@ -64,7 +64,7 @@ static int yyerror( char *errname);
 %type <node> block statementlist statement funcall localfundef funheader param
 %type <node> paramsequence funbody localfundeflist vardeclist return vardec
 %type <node> ifblock elseblock whileblock dowhileblock forblock forinitstat 
-%type <node> arrayindexing varnumsequence arraydef
+%type <node> arrayindexing varnumsequence arraydef arrayinit
 %type <cbinop> binop
 %type <cmonop> monOp
 %type <ctype> type
@@ -567,6 +567,13 @@ expr 			:	expr binop unaryandcast
 					DEBUG(" UNARY AND CAST");
 					$$ = $1;
 				}
+				|
+				arrayinit
+				{ // this is the special array initialization square brackets.
+				  // As per our thoughts, this can occur only in an assignment statement. So placing it here.
+					DEBUG("ARRAY INIT SQ BRACKETS");
+					$$=$1;
+				}
 				;
 	 
 unaryandcast 		: 	monOp exprfunctioncall 
@@ -622,6 +629,12 @@ arrayindexing		:	ID SQ_BRACKET_L exprsequence SQ_BRACKET_R
 				}
 				;
 
+arrayinit		: 	SQ_BRACKET_L exprsequence SQ_BRACKET_R
+				{
+					DEBUG("IN ARRAY INIT SQ BRACKETS");
+					$$=TBmakeArrayinit($2);
+				}
+				;
 
 exprsequence 		:	expr COMMA exprsequence
 				{
