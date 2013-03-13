@@ -15,7 +15,7 @@
  */
 
 
-#include "print.h"
+#include "separate_decl_init.h"
 #include "traverse.h"
 #include "tree_basic.h"
 #include "dbug.h"
@@ -29,9 +29,9 @@ struct INFO {
   bool firsterror;
 };
 
-struct TABSTACK {
+struct SEPTABSTACK {
   int  n_count; // number of tabs to be prefixed.
-} tabstack = { 0 };
+} septabstack = { 0 };
 
 #define TABSTACK_MAXSIZE 100
 
@@ -39,7 +39,7 @@ struct TABSTACK {
 
 #define PRINTNODE(msg)	\
     printf("\n");       \
-    puttabs();          \
+    SEPputtabs();          \
     printf("=>\t[[ %s ]]\t", msg);
 
 #define PRINTTYPE(type)   \
@@ -66,31 +66,31 @@ struct TABSTACK {
       case TRUE   : printf(" export "); break;  \
     } 
 
-#define PRELOGUE  push();
+#define PRELOGUE  SEPpush();
 
-#define EPILOGUE  pop();
+#define EPILOGUE  SEPpop();
 
-void push()
+void SEPpush()
 {
-  if ( TABSTACK_MAXSIZE > tabstack.n_count)
+  if ( TABSTACK_MAXSIZE > septabstack.n_count)
   {
-    tabstack.n_count++;
+    septabstack.n_count++;
   }
 }
 
-void pop()
+void SEPpop()
 {
-  if ( 0 < tabstack.n_count)
+  if ( 0 < septabstack.n_count)
   {
-    tabstack.n_count--;
+    septabstack.n_count--;
   }
 }
 
-void puttabs()
+void SEPputtabs()
 {
   int i;
 
-  for(i=0; i<tabstack.n_count; i++)
+  for(i=0; i<septabstack.n_count; i++)
   {
     printf("\t");
   }
@@ -118,7 +118,7 @@ static info *FreeInfo( info *info)
 
 /** <!--******************************************************************-->
  *
- * @fn PRTinstr
+ * @fn SEPinstr
  *
  * @brief Prints the node and its sons/attributes
  *
@@ -130,9 +130,9 @@ static info *FreeInfo( info *info)
  ***************************************************************************/
 
 node *
-PRTassign (node * arg_node, info * arg_info)
+SEPassign (node * arg_node, info * arg_info)
 {
-  DBUG_ENTER ("PRTassign");
+  DBUG_ENTER ("SEPassign");
 
   PRINTNODE("Assign");
 
@@ -155,7 +155,7 @@ PRTassign (node * arg_node, info * arg_info)
 
 /** <!--******************************************************************-->
  *
- * @fn PRTbinop
+ * @fn SEPbinop
  *
  * @brief Prints the node and its sons/attributes
  *
@@ -167,11 +167,11 @@ PRTassign (node * arg_node, info * arg_info)
  ***************************************************************************/
 
 node *
-PRTbinop (node * arg_node, info * arg_info)
+SEPbinop (node * arg_node, info * arg_info)
 {
   char *tmp;
 
-  DBUG_ENTER ("PRTbinop");
+  DBUG_ENTER ("SEPbinop");
 
   PRINTNODE("BinOp");
 
@@ -239,7 +239,7 @@ PRTbinop (node * arg_node, info * arg_info)
 
 /** <!--******************************************************************-->
  *
- * @fn PRTfloat
+ * @fn SEPfloat
  *
  * @brief Prints the node and its sons/attributes
  *
@@ -251,9 +251,9 @@ PRTbinop (node * arg_node, info * arg_info)
  ***************************************************************************/
 
 node *
-PRTfloat (node * arg_node, info * arg_info)
+SEPfloat (node * arg_node, info * arg_info)
 {
-  DBUG_ENTER ("PRTfloat");
+  DBUG_ENTER ("SEPfloat");
 
   PRELOGUE
 
@@ -268,7 +268,7 @@ PRTfloat (node * arg_node, info * arg_info)
 
 /** <!--******************************************************************-->
  *
- * @fn PRTnum
+ * @fn SEPnum
  *
  * @brief Prints the node and its sons/attributes
  *
@@ -280,9 +280,9 @@ PRTfloat (node * arg_node, info * arg_info)
  ***************************************************************************/
 
 node *
-PRTnum (node * arg_node, info * arg_info)
+SEPnum (node * arg_node, info * arg_info)
 {
-  DBUG_ENTER ("PRTnum");
+  DBUG_ENTER ("SEPnum");
 
   PRELOGUE
 
@@ -296,7 +296,7 @@ PRTnum (node * arg_node, info * arg_info)
 
 /** <!--******************************************************************-->
  *
- * @fn PRTboolean
+ * @fn SEPboolean
  *
  * @brief Prints the node and its sons/attributes
  *
@@ -308,9 +308,9 @@ PRTnum (node * arg_node, info * arg_info)
  ***************************************************************************/
 
 node *
-PRTbool (node * arg_node, info * arg_info)
+SEPbool (node * arg_node, info * arg_info)
 {
-  DBUG_ENTER ("PRTbool");
+  DBUG_ENTER ("SEPbool");
 
   PRELOGUE
 
@@ -329,7 +329,7 @@ PRTbool (node * arg_node, info * arg_info)
 
 /** <!--******************************************************************-->
  *
- * @fn PRTvar
+ * @fn SEPvar
  *
  * @brief Prints the node and its sons/attributes
  *
@@ -341,9 +341,9 @@ PRTbool (node * arg_node, info * arg_info)
  ***************************************************************************/
 
 node *
-PRTvar (node * arg_node, info * arg_info)
+SEPvar (node * arg_node, info * arg_info)
 {
-  DBUG_ENTER ("PRTvar");
+  DBUG_ENTER ("SEPvar");
   
   PRINTNODE("Var");
 
@@ -361,7 +361,7 @@ PRTvar (node * arg_node, info * arg_info)
 
 /** <!--******************************************************************-->
  *
- * @fn PRTerror
+ * @fn SEPerror
  *
  * @brief Prints the node and its sons/attributes
  *
@@ -373,11 +373,11 @@ PRTvar (node * arg_node, info * arg_info)
  ***************************************************************************/
 
 node *
-PRTerror (node * arg_node, info * arg_info)
+SEPerror (node * arg_node, info * arg_info)
 {
   bool first_error;
 
-  DBUG_ENTER ("PRTerror");
+  DBUG_ENTER ("SEPerror");
 
   PRELOGUE
   
@@ -414,9 +414,9 @@ PRTerror (node * arg_node, info * arg_info)
 
 
 
-node *PRTstatement(node * arg_node, info * arg_info)
+node *SEPstatement(node * arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTstatement");
+  DBUG_ENTER("SEPstatement");
   
   PRINTNODE("Statement");
 
@@ -429,7 +429,7 @@ node *PRTstatement(node * arg_node, info * arg_info)
   DBUG_RETURN (arg_node);
 }
 
-node *PRTprogram (node *arg_node, info * arg_info)
+node *SEPprogram (node *arg_node, info * arg_info)
 {
 	DBUG_ENTER("Program");
 
@@ -446,9 +446,9 @@ node *PRTprogram (node *arg_node, info * arg_info)
   DBUG_RETURN (arg_node);
 }
 
-node *PRTvardec (node *arg_node, info * arg_info)
+node *SEPvardec (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTvardec");
+  DBUG_ENTER("SEPvardec");
 
   PRINTNODE("VarDec");
 
@@ -466,9 +466,9 @@ node *PRTvardec (node *arg_node, info * arg_info)
   
   DBUG_RETURN (arg_node);
 }
-node *PRTparam (node *arg_node, info * arg_info)
+node *SEPparam (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTparam");
+  DBUG_ENTER("SEPparam");
 
   PRINTNODE("Param");
 
@@ -485,9 +485,9 @@ node *PRTparam (node *arg_node, info * arg_info)
   DBUG_RETURN (arg_node);
 }
 
-node *PRTfundec (node *arg_node, info * arg_info)
+node *SEPfundec (node *arg_node, info * arg_info)
 {
-	DBUG_ENTER("PRTfundec");
+	DBUG_ENTER("SEPfundec");
 
   PRINTNODE("FunDec");
 
@@ -501,9 +501,9 @@ node *PRTfundec (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTfundef (node *arg_node, info * arg_info)
+node *SEPfundef (node *arg_node, info * arg_info)
 {
-	DBUG_ENTER("PRTfundef");
+	DBUG_ENTER("SEPfundef");
 
   PRINTNODE("FunDef");
 
@@ -517,9 +517,9 @@ node *PRTfundef (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTparamlist (node *arg_node, info * arg_info)
+node *SEPparamlist (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTparamlist");
+  DBUG_ENTER("SEPparamlist");
 
   PARAMLIST_NEXT(arg_node) =TRAVopt(PARAMLIST_NEXT(arg_node),arg_info);
 
@@ -533,9 +533,9 @@ node *PRTparamlist (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTfunheader (node *arg_node, info * arg_info)
+node *SEPfunheader (node *arg_node, info * arg_info)
 {
-	DBUG_ENTER("PRTfunheader");
+	DBUG_ENTER("SEPfunheader");
 
   PRINTNODE("FunHeader");
 
@@ -552,9 +552,9 @@ node *PRTfunheader (node *arg_node, info * arg_info)
   DBUG_RETURN (arg_node);
 
 }
-node *PRTlocalfundef (node *arg_node, info * arg_info)
+node *SEPlocalfundef (node *arg_node, info * arg_info)
 {
-	DBUG_ENTER("PRTlocalfundef");
+	DBUG_ENTER("SEPlocalfundef");
 
   PRINTNODE("LocalFunDef");
 
@@ -562,15 +562,15 @@ node *PRTlocalfundef (node *arg_node, info * arg_info)
   
   LOCALFUNDEF_FUNHEADER(arg_node) =TRAVdo(LOCALFUNDEF_FUNHEADER(arg_node),arg_info);
   
-  LOCALFUNDEF_FUNBODY(arg_node) =TRAVopt(LOCALFUNDEF_FUNBODY(arg_node),arg_info);
+  LOCALFUNDEF_FUNBODY(arg_node) =TRAVdo(LOCALFUNDEF_FUNBODY(arg_node),arg_info);
   
   EPILOGUE
 
   DBUG_RETURN (arg_node);
 }
-node *PRTfunbody (node *arg_node, info * arg_info)
+node *SEPfunbody (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTfunbody");
+  DBUG_ENTER("SEPfunbody");
 
   PRINTNODE("FunBody");
 
@@ -588,9 +588,9 @@ node *PRTfunbody (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTlocalfundeflist (node *arg_node, info * arg_info)
+node *SEPlocalfundeflist (node *arg_node, info * arg_info)
 {
-	DBUG_ENTER("PRTlocalfundeflist");
+	DBUG_ENTER("SEPlocalfundeflist");
 
   LOCALFUNDEFLIST_NEXT(arg_node) =TRAVopt(LOCALFUNDEFLIST_NEXT(arg_node),arg_info);
 
@@ -604,9 +604,9 @@ node *PRTlocalfundeflist (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTglobaldef (node *arg_node, info * arg_info)
+node *SEPglobaldef (node *arg_node, info * arg_info)
 {
-	DBUG_ENTER ("PRTglobaldef");
+	DBUG_ENTER ("SEPglobaldef");
 
 	PRINTNODE("global def");
 
@@ -618,9 +618,9 @@ node *PRTglobaldef (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTusualdef (node *arg_node, info * arg_info)
+node *SEPusualdef (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTusualdef");
+  DBUG_ENTER("SEPusualdef");
 
   PRINTNODE("UsualDef");
 
@@ -638,9 +638,9 @@ node *PRTusualdef (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTarraydef (node *arg_node, info * arg_info)
+node *SEParraydef (node *arg_node, info * arg_info)
 {
-	DBUG_ENTER("PRTarraydef");
+	DBUG_ENTER("SEParraydef");
 
 	PRINTNODE("ArrayDef");
 
@@ -658,9 +658,9 @@ node *PRTarraydef (node *arg_node, info * arg_info)
 
 	DBUG_RETURN (arg_node);
 }
-node *PRTglobaldec (node *arg_node, info * arg_info)
+node *SEPglobaldec (node *arg_node, info * arg_info)
 {
-	DBUG_ENTER("PRTglobaldec");
+	DBUG_ENTER("SEPglobaldec");
 
   PRINTNODE("GlobalDec");
 
@@ -678,9 +678,9 @@ node *PRTglobaldec (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTvarnumlist (node *arg_node, info * arg_info)
+node *SEPvarnumlist (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTvarnumlist");
+  DBUG_ENTER("SEPvarnumlist");
 
   VARNUMLIST_NEXT(arg_node) = TRAVopt(VARNUMLIST_NEXT(arg_node), arg_info);
 
@@ -694,9 +694,9 @@ node *PRTvarnumlist (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTvardeclist (node *arg_node, info * arg_info)
+node *SEPvardeclist (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTvardeclist");
+  DBUG_ENTER("SEPvardeclist");
 
   VARDECLIST_NEXT(arg_node) =TRAVopt(VARDECLIST_NEXT(arg_node),arg_info);
 
@@ -710,9 +710,9 @@ node *PRTvardeclist (node *arg_node, info * arg_info)
   
   DBUG_RETURN (arg_node);
 }
-node *PRTreturn (node *arg_node, info * arg_info)
+node *SEPreturn (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTreturn");
+  DBUG_ENTER("SEPreturn");
 
   PRINTNODE("Return");
 
@@ -724,9 +724,9 @@ node *PRTreturn (node *arg_node, info * arg_info)
   
   DBUG_RETURN (arg_node);
 }
-node *PRTstatementlist (node *arg_node, info * arg_info)
+node *SEPstatementlist (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTstatementlist");
+  DBUG_ENTER("SEPstatementlist");
 
   STATEMENTLIST_NEXT(arg_node) =TRAVopt(STATEMENTLIST_NEXT(arg_node),arg_info);
 
@@ -742,9 +742,9 @@ node *PRTstatementlist (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTdowhilestat (node *arg_node, info * arg_info)
+node *SEPdowhilestat (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTdowhilestat");
+  DBUG_ENTER("SEPdowhilestat");
 
   PRINTNODE("DoWhileStat");
 
@@ -758,9 +758,9 @@ node *PRTdowhilestat (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTwhilestat (node *arg_node, info * arg_info)
+node *SEPwhilestat (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTwhilestat");
+  DBUG_ENTER("SEPwhilestat");
 
   PRINTNODE("WhileStat");
 
@@ -775,9 +775,9 @@ node *PRTwhilestat (node *arg_node, info * arg_info)
   DBUG_RETURN (arg_node);
 
 }
-node *PRTforstat (node *arg_node, info * arg_info)
+node *SEPforstat (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTforstat");
+  DBUG_ENTER("SEPforstat");
 
   PRINTNODE("ForStat");
 
@@ -795,9 +795,9 @@ node *PRTforstat (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTfuncall (node *arg_node, info * arg_info)
+node *SEPfuncall (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTfuncall");
+  DBUG_ENTER("SEPfuncall");
 
   PRINTNODE("FunCall");
 
@@ -811,9 +811,9 @@ node *PRTfuncall (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTexprlist (node *arg_node, info * arg_info)
+node *SEPexprlist (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTexprlist");
+  DBUG_ENTER("SEPexprlist");
 
   PRINTNODE("ExprList");
 
@@ -827,9 +827,9 @@ node *PRTexprlist (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTifstat (node *arg_node, info * arg_info)
+node *SEPifstat (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTifstat");
+  DBUG_ENTER("SEPifstat");
 
   PRINTNODE("IfStat");
 
@@ -845,9 +845,9 @@ node *PRTifstat (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTelseblock (node *arg_node, info * arg_info)
+node *SEPelseblock (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTelseblock");
+  DBUG_ENTER("SEPelseblock");
 
   PRINTNODE("ElseBlock");
 
@@ -859,11 +859,11 @@ node *PRTelseblock (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTmonop (node *arg_node, info * arg_info)
+node *SEPmonop (node *arg_node, info * arg_info)
 {
   char *tmp;
 
-  DBUG_ENTER ("PRTmonop");
+  DBUG_ENTER ("SEPmonop");
 
   PRINTNODE("MonOp");
 
@@ -892,9 +892,9 @@ node *PRTmonop (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTcast (node *arg_node, info * arg_info)
+node *SEPcast (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER ("PRTcast");
+  DBUG_ENTER ("SEPcast");
 
   PRINTNODE("Cast");
 
@@ -912,9 +912,9 @@ node *PRTcast (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTenclosedblock (node *arg_node, info * arg_info)
+node *SEPenclosedblock (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTenclosedblock");
+  DBUG_ENTER("SEPenclosedblock");
 
   PRINTNODE("EnclosedBlock");
 
@@ -926,9 +926,9 @@ node *PRTenclosedblock (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTvardeclistlocalfundef (node *arg_node, info * arg_info)
+node *SEPvardeclistlocalfundef (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTvardeclistlocalfundef");
+  DBUG_ENTER("SEPvardeclistlocalfundef");
 
   PRINTNODE("VarDecListLocalFunDef");
 
@@ -942,9 +942,9 @@ node *PRTvardeclistlocalfundef (node *arg_node, info * arg_info)
 
   DBUG_RETURN (arg_node);
 }
-node *PRTarrayinit (node *arg_node, info * arg_info)
+node *SEParrayinit (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("PRTarrayinit");
+  DBUG_ENTER("SEParrayinit");
 
   PRINTNODE("ArrayInit");
 
@@ -966,19 +966,19 @@ node *PRTarrayinit (node *arg_node, info * arg_info)
  ******************************************************************************/
 
 node 
-*PRTdoPrint( node *syntaxtree)
+*SEPdoSeparateDeclInit( node *syntaxtree)
 {
   info *info;
   
-  DBUG_ENTER("PRTdoPrint");
+  DBUG_ENTER("SEPdoSeparateDeclInit");
 
-  DBUG_ASSERT( (syntaxtree!= NULL), "PRTdoPrint called with empty syntaxtree");
+  DBUG_ASSERT( (syntaxtree!= NULL), "SEPdoSeparateDeclInit called with empty syntaxtree");
 
   printf( "\n\n------------------------------\n\n");
 
   info = MakeInfo();
   
-  TRAVpush( TR_prt);
+  TRAVpush( TR_sep);
 
   syntaxtree = TRAVdo( syntaxtree, info);
 

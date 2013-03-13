@@ -27,6 +27,8 @@
 				include="free_node.h" />
 			<traversal id="CHK" name="Check the Tree" default="user"
 				include="check.h" />
+			<traversal id="SEP" name="Separate Decl / Initializations" default="user"
+				include="separate_decl_init.h" />
 
 		</general>
 	</phases>
@@ -405,7 +407,7 @@
 				</son>
 				<son name="FunBody">
 					<targets>
-						<target mandatory="yes">
+						<target mandatory="no">
 							<node name="FunBody" />
 							<phases>
 								<all />

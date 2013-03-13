@@ -24,48 +24,55 @@ SUBPHASE( scp,
           ALWAYS,
           ld)
 
+
 ENDPHASE( ld) 
 
-
-/*********** Added by Koustubha Bhat. 6th feb 2013 ************************** /
-
-PHASE ( prefixphase, "Prefixing phase", ALWAYS)
-
-SUBPHASE (prefix, "Prefixing __ for all variables", PREFIXdoPrefix, ALWAYS, prefixphase)
-
-ENDPHASE( prefixphase)
-
-******************************************************************************/
-
-/*********** Added by Koustubha Bhat. 11th feb 2013 ************************** /
-
-PHASE ( cntbinopphase, "Counting binary operations phase", ALWAYS)
-
-SUBPHASE (cntbinop, "Counting binops", CNTBINOPdoCount, ALWAYS, cntbinopphase)
-
-ENDPHASE( cntbinopphase)
-
-******************************************************************************/
-
-
-PHASE( cg,
-       "Generating Code",
+PHASE( ast,
+       "Printing AST structure",
        ALWAYS)
 
 SUBPHASE( prt, 
-          "Generating byte code",
+          "Printing the intermediate representation",
           PRTdoPrint, 
           ALWAYS,
-          cg)      
+          ast)      
+
+/*
+SUBPHASE( frtr, 
+          "De-allocating syntax tree representation",
+          FREEdoFreeTree, 
+          ALWAYS,
+          ast)
+*/
+ENDPHASE( ast) 
+
+PHASE( prir, 
+       "Processing intermediate representation",
+	ALWAYS)
+
+SUBPHASE( sep,
+          "Separating initializations from declarations",
+          SEPdoSeparateDeclInit, 
+          ALWAYS,
+          prir)
+
+SUBPHASE( prt, 
+          "Printing the intermediate representation",
+          PRTdoPrint, 
+          ALWAYS,
+          prir)      
 
 SUBPHASE( frtr, 
           "De-allocating syntax tree representation",
           FREEdoFreeTree, 
           ALWAYS,
-          cg)
+          prir)
 
-ENDPHASE( cg) 
+ENDPHASE( prir)
 
+/******************************************************************************/
+
+#include "phase_undefine_defs.mac"
 
 /******************************************************************************/
 
