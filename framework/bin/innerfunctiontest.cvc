@@ -1,0 +1,142 @@
+/****************************************************
+ Author: Koustubha Bhat
+ UvA ID: 10513892
+ Date  : 10-Feb-2013
+ ****************************************************/
+
+extern void printInt(int val);
+extern void printNewlines(int num);
+extern void printSpaces(int num);
+extern int scanInt();
+
+void printArray(int[n] qPos)
+{
+  int i;
+
+  void helloworld()
+  {
+	printInt(10);
+  }
+  void display()
+  {
+	helloworld();
+  }
+
+  for(int i=0, n)
+  {
+	printInt(qPos[i]);
+	printNewlines(1);
+  }
+}
+
+void printPositions(int[n] qPos)
+{
+  int i;
+  int j;
+  int empty = 1;
+  int queen = 8;
+ 
+  for (int i=0, n)
+  {
+	for (int j=0, n)
+	{
+		if (qPos[i] == j)
+			printInt(queen);
+		else
+			printInt(empty);
+
+		printSpaces(2);
+	}
+	printNewlines(1);
+  }
+}
+
+/*
+int absdiff(int x, int y)
+{
+  int result;
+
+  if ( x >= y )
+	result= x-y;
+  else
+	result= y-x;
+
+  return result;
+}
+
+bool isSafe(int[n] Qpos, int row, int col)
+{
+  bool colsafe = true;
+  bool diagsafe = true;
+
+  for(int i=0, row) // checking the placement of queens in already placed rows
+  {
+	if (Qpos[i] == col)
+	{
+	   colsafe = false;
+	}
+	
+	// y diff and x diff if equal, then they form a diagonal.
+	if (( Qpos[i] != -1) && ( absdiff(Qpos[i], col) == absdiff(i, row) ))  
+	{
+	  diagsafe = false;
+        }
+  }
+
+  return (colsafe && diagsafe );
+}
+
+int count=0;
+/* ---
+   Per row, we have a queen each to be placed.
+   We try placing each queen, step by step in each of its respective columns.
+--- * /
+void placeQueens(int[n] Qpos, int q)
+{
+  int j;
+
+  // iterating thru each column for the qth row.
+  for (int j=0, n)
+  {
+     if ( ( true == isSafe(Qpos, q, j) ) )
+     {
+	Qpos[q] = j; // place the queen.
+
+	if ((n-1) == q)
+	{
+		printNewlines(1);
+		//printArray(Qpos);
+  		printPositions(Qpos);
+		count = count + 1;
+	}
+	else
+	{
+	   // not done yet; have to place the rest of the queens as well.
+	   placeQueens(Qpos, q+1);
+	}
+      }
+  }
+}
+
+export int imain()
+{
+  int size=8;
+  int i;
+
+  int[size] queens;
+
+  for(int i=0, size)
+  {
+	queens[i] = -1;
+  }
+
+  placeQueens(queens, 0);
+  printNewlines(1);
+
+  printInt(count);
+  printNewlines(1);
+  
+  return 0;
+}
+
+*/

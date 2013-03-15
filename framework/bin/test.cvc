@@ -1,0 +1,53 @@
+/****************
+Test code. civic
+****************/
+int i=0;
+void printfunny()
+{
+   int i;
+   hehehe();
+}
+
+void empty()
+{
+  int hahah;
+}
+
+int justreturn()
+{
+  return 1 ;
+}
+
+int justdeclare()
+{
+  int x;
+}
+
+int juststat()
+{
+	hello();
+}
+
+export int imain()
+{
+  int i=0;
+
+  for( int i=0, 1000, 1)
+  {
+	printlaugh();
+  }
+
+  for (int j=0, 20)
+   	if (a<b)
+		while ( 10)
+		  a=b;
+	else
+		do
+		    printlol();
+		while(a==b);
+	if ( isFunny )
+	{
+		printfunny();
+	}
+  return 10;
+}
