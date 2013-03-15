@@ -27,9 +27,19 @@
 				include="free_node.h" />
 			<traversal id="CHK" name="Check the Tree" default="user"
 				include="check.h" />
-			<traversal id="SEP" name="Separate Decl / Initializations" default="user"
-				include="separate_decl_init.h" />
-
+			<traversal id="SEP" name="Separate Decl / Initializations" default="sons"
+				include="separate_decl_init.h" >
+				<travuser>
+		                	<node name="UsualDef"/>
+		                	<node name="VarDec"/>
+		                	<node name="VarDecList"/>
+		                	<node name="StatementList"/>
+		                	<node name="FunCall"/>
+		                	<node name="Paramlist"/>
+		                	<node name="ForStat"/>
+							<node name="ArrayInit" />
+        		</travuser>
+			</traversal>
 		</general>
 	</phases>
 	<nodesets>
