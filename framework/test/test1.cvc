@@ -1,2 +1,16 @@
-a = (43-2);
-b = (true*7);
+int main(int x)
+{
+   int i;
+   int x;
+   
+   void display()
+   {
+	printhi();
+   }
+   printint();
+   for(int i=0, n)
+   {
+	printInt(9);
+   }
+   return 0;
+}
