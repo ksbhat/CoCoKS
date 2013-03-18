@@ -1,0 +1,8 @@
+export int a=5;
+export int [a]b;
+int [c,a]d;
+void test()
+{
+	int b=10;
+	test(d);
+}

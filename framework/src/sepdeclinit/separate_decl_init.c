@@ -1,4 +1,4 @@
-    
+
 /**
  * @file print.c
  *
@@ -18,655 +18,1209 @@
 #include "separate_decl_init.h"
 #include "traverse.h"
 #include "tree_basic.h"
+#include "copy.h"
 #include "dbug.h"
 #include "memory.h"
 #include "globals.h"
 #include "str.h"
+#include "stack_lib.h"
+#include "print.h"
+#include "infostruct.h"
 
 /*
  * INFO structure
  */
-struct INFO {
-  bool firsterror;
-  bool isglobal;
-
-  node *gstatementlist;
-  node *lstatementlist;
-
-  node *gvardeclist;
-  node *lvardeclist;
-  node *prevparamlist;
-  varbag *userdefined;
-  varbag *compilerdefined;
-};
 
 typedef enum {
-  USUALDEF, VARDEC,ARRAYDEF ;
+	USUALDEF, VARDEC,ARRAYDEF
 } DEC_TYPE;
 
-typedef struct VARBAG {
-DEC_TYPE node_type;
-node *var;
-node *statements[2];
-struct VARBAG *next; 
+typedef struct{
+	DEC_TYPE node_type;
+	node *var;
+	node *statements[2];
+	struct varbag *next;
 } varbag;
 
-#define INFO_FIRSTERROR(n) ((n)->firsterror)
-#define INFO_ISGLOBAL(n) ((n)->isglobal)
-#define INFO_GSTATEMENTLIST(n) ((n)->gstatementlist)
-#define INFO_LSTATEMENTLIST(n) ((n)->lstatementlist)
-#define INFO_GVARDECLIST(n)    ((n)->gvardeclist)
-#define INFO_LVARDECLIST(n)    ((n)->lvardeclist)
-#define INFO_COMPILERDEFVARS(n)    ((n)->compilerdefined)
-#define INFO_USERDEFVARS(n)   ((n)->userdefined)
-#define INFO_PREVPARAMLIST(n)   ((n)->prevparamlist);
-#define VARBAG_NEXT(n)        ((n)->next)
-#define VARBAG_DECL(n)        ((n)->var)
-#define VARBAG_STMTS(n)        ((n)->statements)
-#define VARBAG_TYPE(n)        ((n)->node_type)
 
-#define NAME_COUNTER_LIMIT  10000
+
+
+
 
 static info *MakeInfo()
 {
-  info *result;
-  
-  result = MEMmalloc(sizeof(info));
+	info *result;
 
-  INFO_FIRSTERROR(result) = FALSE;
+	result = MEMmalloc(sizeof(info));
 
-  INFO_ISGLOBAL(result) = FALSE;
+	INFO_FIRSTERROR(result) = FALSE;
 
-  INFO_GSTATEMENTLIST(result) = NULL;
+	INFO_ISGLOBAL(result) = FALSE;
 
-  INFO_LSTATEMENTLIST(result) = NULL;
+	INFO_GSTATEMENTLISTHEAD(result)=NULL;
 
-  INFO_GVARDECLIST(result) = NULL;
+	INFO_GSTATEMENTLIST(result) = NULL;
 
-  INFO_LVARDECLIST(result) = NULL;
+	INFO_LSTATEMENTLIST(result) = NULL;
 
-  INFO_COMPILERDEFVARS(result) = NULL;
+	INFO_GVARDECLIST(result) = NULL;
 
-  INFO_USERDEFVARS(result) = NULL;
+	INFO_LVARDECLIST(result) = NULL;
 
-  INFO_PREVPARAMLIST(n) = NULL:
+	INFO_PREVPARAMLIST(result) = NULL;
 
-  return result;
+	INFO_FUNCTIONNAME(result)=NULL;
+
+	INFO_VARIABLECHECK(result)=FALSE;
+
+	INFO_VARLISTNAME(result)=NULL;
+
+	INFO_HEADSCOPEDARRAY(result)=NULL;
+
+	INFO_BUILDVARLIST(result)=NULL;
+
+	INFO_SHADOWVARIABLELIST(result)=NULL;
+
+	INFO_SHADOWVARIABLESCOPE(result)=NULL;
+
+	INFO_APPENDSTATEMENT(result)=NULL;
+
+	INFO_ISFUNCALLSTATEMENT(result)=FALSE;
+
+	INFO_ENLCOSEDBLOCKCOUNT(result)=0;
+
+	INFO_FORID(result)=NULL;
+
+	INFO_PREVFORID(result)=NULL;
+
+	return result;
 }
+
 
 
 static info *FreeInfo( info *info)
 {
-  info = MEMfree( info);
+	info = MEMfree( info);
 
-  return info;
+	return info;
 }
 
-/*
-/** <!--******************************************************************-->
- *
- * @fn SEPinstr
- *
- * @brief Prints the node and its sons/attributes
- *
- * @param arg_node BinOp node to process
- * @param arg_info pointer to info structure
- *
- * @return processed node
- *
- *************************************************************************** /
-
-node *SEParrayinit (node *arg_node, info * arg_info)
+void freeNode(node *arg_node)
 {
-  DBUG_ENTER("SEParrayinit");
-
-  PRINTNODE("ArrayInit");
-
-  PRELOGUE
-  
-  ARRAYINIT_EXPRLIST(arg_node) =TRAVdo(ARRAYINIT_EXPRLIST(arg_node),arg_info);
-  
-  EPILOGUE
-
-  DBUG_RETURN (arg_node);
+	if(arg_node!=NULL)
+	{
+		MEMfree(arg_node);
+	}
 }
 
-*/
+void freevarlistname(struct varlistname *varlist)
+{
+	DBUG_ENTER("SEPfreevariablelistname");
+	struct varlistname *prevlist;
+	prevlist=varlist;
+
+	while(varlist!=NULL)
+	{
+		MEMfree(varlist->id);
+		varlist=varlist->next;
+		MEMfree(prevlist);
+		prevlist=varlist;
+	}
+	DBUG_VOID_RETURN;
+}
+
+void freevariablelist(struct variablelist *variable)
+{
+	DBUG_ENTER("SEPfreevariablelist");
+	struct variablelist *prevlist;
+
+	prevlist=variable;
+
+
+
+	while(variable!=NULL)
+	{
+
+		freeNode(variable->varvardec);
+		variable=variable->next;
+
+		MEMfree(prevlist);
+
+		prevlist=variable;
+	}
+	DBUG_VOID_RETURN;
+
+}
+
+void freescopedvariable(struct scopedvariable *scopedlist)
+{
+	DBUG_ENTER("SEPfreescopedvariable");
+	struct scopedvariable *prevlist;
+	prevlist=scopedlist;
+	freevariablelist(scopedlist->head);
+	MEMfree(prevlist);
+
+
+	DBUG_VOID_RETURN;
+}
+
+
 
 char *SEPgenvarname(info *arg_info)
 {
-  char szPattern[3] = "__";
-  char  *name;
-  static int counter = 0;
+	DBUG_ENTER("SEPgetvarname");
+	char szPattern[3] = "__";
+	char  *name,*clearname;
+	static int counter = 0;
+	struct varlistname *varseq;
+	bool flag;
 
-  name = STRcat(szPattern, STRitoa(counter));
-  counter = (counter + 1) % NAME_COUNTER_LIMIT;
+	while (TRUE)
+	{
+		flag=FALSE;
+		if(counter<10)
+		{
+			clearname=STRitoa(counter);
+			name=STRcat("0",clearname);
+			MEMfree(clearname);
+			clearname=name;
+		}
+		name = STRcat(szPattern, name);
+		MEMfree(clearname);
+		counter = (counter + 1) % NAME_COUNTER_LIMIT;
+		if(INFO_VARLISTNAME(arg_info)!=NULL)
+		{
 
-  return name;
+			varseq=INFO_VARLISTNAME(arg_info);
+			while(varseq!=NULL)
+			{
+
+				if(STReq(varseq->id,name))
+				{
+
+					flag=TRUE;
+				}
+				varseq=varseq->next;
+			}
+			if(!flag)
+			{
+				DBUG_RETURN(name);
+			}
+		}
+		else
+			break;
+	}
+	DBUG_RETURN(name);
 }
 
-bool SEPdetectnamecollision(node *arg_node)
+bool ispotentialcollision(node *arg_node)
 {
-   //TODO: later
-  return FALSE;
+
+	DBUG_ENTER("SEPispotentialCollision");
+	//TODO: later
+
+	char *id=VAR_NAME(arg_node);
+	if(STRlen(id)==4)
+	{
+
+		if(STRprefix("__",id))
+		{
+			if((id[2]>='0' && id[2]<='9') && (id[3]>='0' && id[3]<='9'))
+			{
+				printf("about to return true");
+				DBUG_RETURN(TRUE);
+			}
+		}
+	}
+	DBUG_RETURN(FALSE);
 }
 
-extern node *SEPfuncall (node *arg_node, info * arg_info);
-extern node *SEPparamlist (node *arg_node, info * arg_info);
-extern node *SEPforstat (node *arg_node, info * arg_info);
-extern node *SEParrayinit(node *arg_node, info * arg_info);
+
+bool checkVariableExist(node *var_node,info *arg_info)
+{
+	DBUG_ENTER("SEPCheckvariableexist");
+	char *id,*comparedid;
+	struct scopedvariable *scoped_array;
+	struct variablelist *variables;
+	node* variable;
+
+	id= VAR_NAME(var_node);
+
+	printf("\nInside checkvariable with ID:%s",id);
+
+	scoped_array=INFO_HEADSCOPEDARRAY(arg_info);
+
+	while(scoped_array!=NULL)
+	{
+
+		variables=scoped_array->head;
+
+		while(variables!=NULL)
+		{
+			variable = variables->varvardec;
+
+			comparedid=VAR_NAME(VARDEC_VAR(variable));
+			printf("\nInside checkvariable with ID:%s",comparedid);
+			if(STReq(id,comparedid))
+			{
+				printf("\nFOUND MATCHING VARIABLES");
+				DBUG_RETURN(TRUE);
+			}
+			variables=variables->next;
+		}
+		scoped_array=scoped_array->next;
+	}
+	DBUG_RETURN(FALSE);
+}
+
+bool checkshadow(node *var_node,info *arg_info)
+{
+	DBUG_ENTER("SEPcheckshadow");
+	char *id,*comparedid;
+	struct scopedvariable *shadow_variable;
+	struct variablelist *variables;
+	node* variable;
+
+	id= VAR_NAME(var_node);
+
+
+
+	shadow_variable=INFO_SHADOWVARIABLESCOPE(arg_info);
+	while(shadow_variable!=NULL)
+	{
+		variables=shadow_variable->head;
+
+		while(variables!=NULL)
+		{
+
+			variable = variables->varvardec;
+
+			comparedid=VAR_NAME(VARDEC_VAR(variable));
+			printf("\ncompareid:%s",comparedid);
+			if(STReq(id,comparedid))
+			{
+				printf("inside return loop");
+				DBUG_RETURN(TRUE);
+			}
+			variables=variables->next;
+		}
+
+		shadow_variable=shadow_variable->next;
+	}
+
+	DBUG_RETURN(FALSE);
+}
+
+node* returnarraydec(node *var_node,info *arg_info)
+{
+	char *id,*comparedid;
+	DBUG_ENTER("SEPreturnarray");
+
+	struct scopedvariable *scoped_array;
+	struct variablelist *variables;
+	node* variable;
+
+	id= VAR_NAME(var_node);
+	scoped_array=INFO_HEADSCOPEDARRAY(arg_info);
+	while(scoped_array!=NULL)
+	{
+		variables=scoped_array->head;
+
+		while(variables!=NULL)
+		{
+			variable = variables->varvardec;
+			comparedid=VAR_NAME(VARDEC_VAR(variable));
+			if(STReq(id,comparedid))
+			{
+				DBUG_RETURN(variable);
+			}
+			variables=variables->next;
+		}
+		scoped_array=scoped_array->next;
+	}
+
+	DBUG_RETURN(NULL);
+}
+
+
+
+node *SEPprogram(node *arg_node, info * arg_info)
+{
+	node *tail,*codeblock,*program;
+	struct scopedvariable *globalarray;
+	struct variablelist *backup;
+	DBUG_ENTER("SEPprogram");
+
+	program=arg_node;
+
+
+
+
+	/*
+	 * First part would be to find all the global variable and assign it to __init()
+	 * to the global variable counter. This lookup is done ahead just to get idea
+	 * of the variable those variable we need to create in the init function
+	 *
+	 */
+
+	globalarray=MEMmalloc(sizeof(struct scopedvariable));
+
+	INFO_VARIABLECHECK(arg_info)=TRUE;
+	while(program != NULL)
+	{
+		if(NODE_TYPE (PROGRAM_CODEBLOCK(program))==N_vardeclistlocalfundef
+				|| NODE_TYPE(PROGRAM_CODEBLOCK(program))==N_globaldec||NODE_TYPE(PROGRAM_CODEBLOCK(program))==N_globaldef)
+		{
+
+			PROGRAM_CODEBLOCK(program)=TRAVdo(PROGRAM_CODEBLOCK(program),arg_info);
+		}
+		else if(NODE_TYPE(PROGRAM_CODEBLOCK(program))==N_fundec)
+		{
+			globalarray->head=INFO_BUILDVARLIST(arg_info);
+			INFO_BUILDVARLIST(arg_info)=NULL;
+			PROGRAM_CODEBLOCK(program)=TRAVdo(PROGRAM_CODEBLOCK(program),arg_info);
+			if(INFO_BUILDVARLIST(arg_info)!=NULL)
+			{
+				freevariablelist(INFO_BUILDVARLIST(arg_info));
+			}
+			INFO_BUILDVARLIST(arg_info)=globalarray->head;
+		}
+
+		/*
+		 * The code below release the paramlist which will be a part
+		 * of the localvariablelist before the next codeblock is analysed.
+		 * For other function this will be cleared in the funbody.
+		 */
+
+
+		program=PROGRAM_NEXT(program);
+	}
+
+	INFO_VARIABLECHECK(arg_info)=FALSE;
+	/*
+	 * the below code create a scope for the global array elements and assign
+	 * all the element found at that level.
+	 */
+
+	if(INFO_BUILDVARLIST(arg_info)!=NULL)
+	{
+		printf("Creating a INFOBUILD VARLIST");
+		globalarray->head=INFO_BUILDVARLIST(arg_info);
+		globalarray->next=INFO_HEADSCOPEDARRAY(arg_info);
+		INFO_BUILDVARLIST(arg_info)=NULL;
+		INFO_HEADSCOPEDARRAY(arg_info)=globalarray;
+	}
+	else
+	{
+		MEMfree(globalarray);
+	}
+
+
+	/*
+	 *This is the place where the function body would get processed
+	 */
+	program=arg_node;
+	while(program != NULL)
+	{
+		if( NODE_TYPE(PROGRAM_CODEBLOCK(program))==N_fundef || NODE_TYPE(PROGRAM_CODEBLOCK(program))==N_vardeclistlocalfundef)
+
+		{
+
+			PROGRAM_CODEBLOCK(program)=TRAVdo(PROGRAM_CODEBLOCK(program),arg_info);
+		}
+		program=PROGRAM_NEXT(program);
+	}
+
+	/*
+	 * this code will the global scope variable
+	 */
+
+	if(INFO_HEADSCOPEDARRAY(arg_info)!=NULL)
+	{
+		freescopedvariable(INFO_HEADSCOPEDARRAY(arg_info));
+	}
+
+	if(INFO_VARLISTNAME(arg_info)!=NULL)
+	{
+		freevarlistname(INFO_VARLISTNAME(arg_info));
+	}
+
+
+	DBUG_RETURN(arg_node);
+}
+
+
+/**************************************************************
+ * This kicks in, when a global or definition is traversed.
+ * If an initialization is detected, it is converted to
+ * a declaration and an assignment is added to the
+ * info structure.
+ ***************************************************************/
+node *SEPvardeclistlocalfundef (node *arg_node, info * arg_info)
+{
+
+	DBUG_ENTER("SEPvardeclistlocalfundef");
+
+	//This will ensure that the global variables are
+	//processed first before the functions
+
+
+
+	if(INFO_VARIABLECHECK(arg_info))
+	{
+		// setting that now we are processing global declarations
+		INFO_ISGLOBAL(arg_info) = TRUE;
+
+
+
+		VARDECLISTLOCALFUNDEF_VARDECLIST(arg_node) =TRAVopt(VARDECLISTLOCALFUNDEF_VARDECLIST(arg_node),arg_info);
+
+		INFO_ISGLOBAL(arg_info) = FALSE;
+	}
+	else
+	{
+
+
+		VARDECLISTLOCALFUNDEF_LOCALFUNDEF(arg_node) =TRAVopt(VARDECLISTLOCALFUNDEF_LOCALFUNDEF(arg_node),arg_info);
+	}
+
+	DBUG_RETURN (arg_node);
+}
+
+/**************************************************************
+ * This kicks in, when a global definition is traversed.
+ * If an initialization is detected, it is converted to
+ * a declaration and an assignment is added to the
+ * info structure.
+ ***************************************************************/
+node *SEPusualdef (node *arg_node, info * arg_info)
+{
+
+	node *assignment, *var, *source;
+	node *statement, *statementlist,*final_statement;
+	struct varlistname *namecollision;
+
+	DBUG_ENTER("SEPusualdef");
+
+	USUALDEF_VAR(arg_node) =TRAVdo(USUALDEF_VAR(arg_node),arg_info);
+	USUALDEF_EXPR(arg_node) =TRAVopt(USUALDEF_EXPR(arg_node),arg_info);
+	if(ispotentialcollision(USUALDEF_VAR(arg_node)))
+	{
+		// NOTE: NEVER use VARBAG_STMTLIST(n) here!
+		var=USUALDEF_VAR(arg_node);
+		namecollision = MEMmalloc(sizeof(struct varlistname));
+		namecollision->id=MEMcopy(sizeof(char)*(STRlen(VAR_NAME(var))+1),VAR_NAME(var));
+		namecollision->next=INFO_VARLISTNAME(arg_info);
+		INFO_VARLISTNAME(arg_info)=namecollision;
+	}
+
+	if (NULL != USUALDEF_EXPR(arg_node))
+	{
+		source = USUALDEF_VAR(arg_node);
+		var = COPYdoCopy(source);
+
+		assignment = TBmakeAssign(var, USUALDEF_EXPR(arg_node) );
+		USUALDEF_EXPR(arg_node) = NULL;
+		final_statement=TBmakeStatement(assignment);
+
+		statementlist = TBmakeStatementlist(final_statement, NULL);
+		if(INFO_GSTATEMENTLIST(arg_info)!=NULL)
+		{
+			STATEMENTLIST_NEXT(INFO_GSTATEMENTLIST(arg_info))=statementlist;
+		}
+		INFO_GSTATEMENTLIST(arg_info) = statementlist;
+		if(INFO_GSTATEMENTLISTHEAD(arg_info)==NULL)
+		{
+			INFO_GSTATEMENTLISTHEAD(arg_info)=statementlist;
+		}
+	}
+
+	DBUG_RETURN (arg_node);
+}
+
+
+node *SEParraydef (node *arg_node, info * arg_info)
+{
+	node *tail,*expr_list,*new_expr_list;
+	node *funvar,*funcall,*assignment_statement,*var,*vardec,*final_statement;
+	struct varlistname *namecollision;
+	struct variablelist *list;
+
+	DBUG_ENTER("SEParraydef");
+
+
+
+	ARRAYDEF_EXPRLIST(arg_node) = TRAVdo(ARRAYDEF_EXPRLIST(arg_node), arg_info);
+
+	ARRAYDEF_VAR(arg_node) = TRAVdo(ARRAYDEF_VAR(arg_node), arg_info);
+
+	if(ispotentialcollision(ARRAYDEF_VAR(arg_node)))
+	{
+		// NOTE: NEVER use VARBAG_STMTLIST(n) here!
+		var=ARRAYDEF_VAR(arg_node);
+		namecollision = MEMmalloc(sizeof(struct varlistname));
+		namecollision->id=MEMcopy(sizeof(char)*(STRlen(VAR_NAME(var))+1),VAR_NAME(var));
+		namecollision->next=INFO_VARLISTNAME(arg_info);
+		INFO_VARLISTNAME(arg_info)=namecollision;
+	}
+
+
+	tail=NULL;
+	expr_list=ARRAYDEF_EXPRLIST(arg_node);
+
+	new_expr_list=COPYdoCopy(expr_list);
+	//Pre-prepare a slot for the function call __allocate statement
+	funvar = TBmakeVar(STRcpy("__allocate"), NULL);
+	funcall = TBmakeFuncall(funvar, new_expr_list);
+
+	var=COPYdoCopy(ARRAYDEF_VAR(arg_node));
+	assignment_statement=TBmakeAssign(var,funcall);
+	final_statement=TBmakeStatement(assignment_statement);
+
+	tail=TBmakeStatementlist(final_statement,NULL);
+
+	if(INFO_GSTATEMENTLIST(arg_info)!=NULL)
+		STATEMENTLIST_NEXT(INFO_GSTATEMENTLIST(arg_info))=tail;
+
+	INFO_GSTATEMENTLIST(arg_info)=tail;
+
+	if(INFO_GSTATEMENTLISTHEAD(arg_info)==NULL)
+		INFO_GSTATEMENTLISTHEAD(arg_info)=INFO_GSTATEMENTLIST(arg_info);
+	/*
+	 * The below code will create a list of array variable in the global scope.
+	 * This will be used when we have to change the function call.
+	 */
+	var=COPYdoCopy(ARRAYDEF_VAR(arg_node));
+	new_expr_list=COPYdoCopy(expr_list);
+
+	vardec=TBmakeVardec(T_int,new_expr_list,var,NULL);
+	list=MEMmalloc(sizeof(struct variablelist));
+	printf("BUILDING INFO LIST");
+	list->varvardec=vardec;
+	list->next=INFO_BUILDVARLIST(arg_info);
+	INFO_BUILDVARLIST(arg_info)=list;
+
+	DBUG_RETURN (arg_node);
+}
+
+
+node *SEPvardec(node *arg_node,info *arg_info)
+{
+	node *expr_list, *new_expr_list, *funvar, *funcall, *assignment_statement;
+	node *statement_list,*expr,*tail,*var,*vardec,*final_statement;
+	struct varlistname *namecollision;
+	struct variablelist *list,*shadowingvariable;
+
+	DBUG_ENTER("SEPvardec");
+
+
+
+	VARDEC_EXPRLIST(arg_node)=TRAVopt(VARDEC_EXPRLIST(arg_node),arg_info);
+
+	expr_list=VARDEC_EXPRLIST(arg_node);
+
+	if(ispotentialcollision(VARDEC_VAR(arg_node)))
+	{
+		// NOTE: NEVER use VARBAG_STMTLIST(n) here!
+		var=VARDEC_VAR(arg_node);
+		namecollision = MEMmalloc(sizeof(struct varlistname));
+		namecollision->id=MEMcopy(sizeof(char)*(STRlen(VAR_NAME(var))+1),VAR_NAME(var));
+		namecollision->next=INFO_VARLISTNAME(arg_info);
+		INFO_VARLISTNAME(arg_info)=namecollision;
+	}
+
+
+
+	//For Array declaration
+	tail=NULL;
+	if(expr_list!=NULL)
+	{
+
+		new_expr_list=COPYdoCopy(expr_list);
+		//Pre-prepare a slot for the function call __allocate statement
+		funvar = TBmakeVar(STRcpy("__allocate"), NULL);
+		funcall = TBmakeFuncall(funvar, new_expr_list);
+		var=COPYdoCopy(VARDEC_VAR(arg_node));
+		assignment_statement=TBmakeAssign(var,funcall);
+		final_statement=TBmakeStatement(assignment_statement);
+		tail=TBmakeStatementlist(final_statement,NULL);
+
+		//the below code is used for adding array elements to the current list
+		var=COPYdoCopy(VARDEC_VAR(arg_node));
+		new_expr_list=COPYdoCopy(expr_list);
+		vardec=TBmakeVardec(T_int,new_expr_list,var,NULL);
+		list=MEMmalloc(sizeof(struct variablelist));
+		printf("BUILDING INFO LIST");
+		list->varvardec=vardec;
+		list->next=INFO_BUILDVARLIST(arg_info);
+		INFO_BUILDVARLIST(arg_info)=list;
+	}
+
+	expr= VARDEC_EXPR(arg_node);
+
+	if(expr != NULL)
+	{
+		VARDEC_EXPR(arg_node)=NULL;
+		var=COPYdoCopy(VARDEC_VAR(arg_node));
+		assignment_statement=TBmakeAssign(var,expr);
+		final_statement= TBmakeStatement(assignment_statement);
+
+		if(!INFO_ISGLOBAL(arg_info))
+		{
+			statement_list=TBmakeStatementlist(final_statement,INFO_LSTATEMENTLIST(arg_info));
+			if(tail!=NULL)
+			{
+				STATEMENTLIST_NEXT(statement_list)=tail;
+				if(INFO_LSTATEMENTLIST(arg_info)!=NULL)
+				{
+					STATEMENTLIST_NEXT(INFO_LSTATEMENTLIST(arg_info))=tail;
+				}
+				INFO_LSTATEMENTLIST(arg_info)=tail;
+				if(INFO_LSTATEMENTLISTHEAD(arg_info)==NULL)
+					INFO_LSTATEMENTLISTHEAD(arg_info)=statement_list;
+			}
+
+			else
+			{
+				statement_list=TBmakeStatementlist(final_statement,NULL);
+
+				if(INFO_LSTATEMENTLIST(arg_info)!=NULL)
+					STATEMENTLIST_NEXT(INFO_LSTATEMENTLIST(arg_info))=statement_list;
+
+				INFO_LSTATEMENTLIST(arg_info)=statement_list;
+
+				if(INFO_LSTATEMENTLISTHEAD(arg_info)==NULL)
+					INFO_LSTATEMENTLISTHEAD(arg_info)=INFO_LSTATEMENTLIST(arg_info);
+
+				/*
+				 * The below code will create a list of
+				 * local non array variable which shadow array variable
+				 */
+
+				if(checkVariableExist(var,arg_info))
+				{
+					printf("\n after the call to checkvariable");
+					shadowingvariable=MEMmalloc(sizeof(struct variablelist));
+					shadowingvariable->varvardec=COPYdoCopy(arg_node);
+					shadowingvariable->next=INFO_SHADOWVARIABLELIST(arg_info);
+					INFO_SHADOWVARIABLELIST(arg_info)=shadowingvariable;
+				}
+			}
+		}
+		else
+		{
+
+			if(tail!=NULL)
+			{
+				CTIerror("Operation performed on line: %d \n reason:assignment is not permitted in global arrays",NODE_LINE(arg_node));
+			}
+			else
+			{
+				statement_list=TBmakeStatementlist(final_statement,NULL);
+
+				if(INFO_GSTATEMENTLIST(arg_info)!=NULL)
+					STATEMENTLIST_NEXT(INFO_GSTATEMENTLIST(arg_info))=statement_list;
+
+				INFO_GSTATEMENTLIST(arg_info)=statement_list;
+
+				if(INFO_GSTATEMENTLISTHEAD(arg_info)==NULL)
+					INFO_GSTATEMENTLISTHEAD(arg_info)=INFO_GSTATEMENTLIST(arg_info);
+			}
+		}
+	}
+	else
+	{
+		if(!INFO_ISGLOBAL(arg_info))
+		{
+
+			if(tail!=NULL)
+			{
+
+				if(INFO_LSTATEMENTLIST(arg_info)!=NULL)
+				{
+					STATEMENTLIST_NEXT(INFO_LSTATEMENTLIST(arg_info))=tail;
+				}
+				INFO_LSTATEMENTLIST(arg_info)=tail;
+
+				if(INFO_LSTATEMENTLISTHEAD(arg_info)==NULL)
+					INFO_LSTATEMENTLISTHEAD(arg_info)=INFO_LSTATEMENTLIST(arg_info);
+			}
+			else
+			{
+				/*
+				 * The below code will create a list of
+				 * local non array variable which shadow array variable.
+				 */
+				var=VARDEC_VAR(arg_node);
+				if(checkVariableExist(var,arg_info))
+				{
+					shadowingvariable=MEMmalloc(sizeof(struct variablelist));
+					shadowingvariable->varvardec=COPYdoCopy(arg_node);
+					shadowingvariable->next=INFO_SHADOWVARIABLELIST(arg_info);
+					INFO_SHADOWVARIABLELIST(arg_info)=shadowingvariable;
+				}
+			}
+		}
+		else
+		{
+			if(tail!=NULL)
+			{
+				if(INFO_GSTATEMENTLIST(arg_info)!=NULL)
+					STATEMENTLIST_NEXT(INFO_GSTATEMENTLIST(arg_info))=tail;
+
+				INFO_GSTATEMENTLIST(arg_info)=tail;
+
+				if(INFO_GSTATEMENTLISTHEAD(arg_info)==NULL)
+					INFO_GSTATEMENTLISTHEAD(arg_info)=INFO_GSTATEMENTLIST(arg_info);
+			}
+		}
+	}
+	VARDEC_VAR(arg_node)=TRAVdo(VARDEC_VAR(arg_node), arg_info);
+
+	DBUG_RETURN (arg_node);
+}
+
 
 node *SEPparamlist (node *arg_node, info * arg_info)
 {
-  node *param;
-  DBUG_ENTER("SEPparamlist");
-
-  PARAMLIST_PARAM(arg_node) =TRAVdo(PARAMLIST_PARAM(arg_node),arg_info);
-
- // PARAMLIST_NEXT(arg_node) = TRAVopt(PARAMLIST_NEXT(arg_node), arg_info);
- 
-  param=PARAMLIST_PARAM(arg_node);
+	DBUG_ENTER("SEPparamlist");
+	node *param,*varnumlist,*newParamlist,*varornum,*tail,*newParam,*var;
+	node *prevparamlist;
+	struct variablelist *shadowingvariable;
 
 
-  // If the param has array dimension specification:
-  if(PARAM_VARNUMLIST(param) != NULL)
-  {
-    varnumlist=PARAM_VARNUMLIST(param);
 
-    varornum=VARNUMLIST_VARORNUM(varnumlist);
-    newParamlist=NULL;
-    while(varnumlist!=NULL)
-    {
-      var=VARORNUM_VAR(varornum);
-      newParam=TBmakeParam(T_int,NULL,var);
-      if(newParamlist==NULL)
-      { 
-        // first time we enter the loop, set the tail.
-        newParamlist=TBmakeParamlist(newParam,newParamlist);
-        tail = newParamlist;
-      }
-      else
-      {
-        newParamlist=TBmakeParamlist(newParam,newParamlist);
-      }
-      varnumlist=VARNUMLIST_NEXT(varornum);
+	PARAMLIST_PARAM(arg_node) =TRAVdo(PARAMLIST_PARAM(arg_node),arg_info);
 
-    }
-       //eg int a, int [m,n]b, int c => c->b->n->m->a. the below code does this insertion
-       PARAMLIST_NEXT(tail)=PARAMLIST_NEXT(arg_node); // m->a
-       PARAMLIST_NEXT(arg_node)=newParamlist; // b->n
-    
-  } 
+	// PARAMLIST_NEXT(arg_node) = TRAVopt(PARAMLIST_NEXT(arg_node), arg_info);
 
-  INFO_PREVPARAMLIST(arg_info)=arg_node;
-  
-  PARAMLIST_NEXT(arg_node) = TRAVopt(PARAMLIST_NEXT(arg_node), arg_info);
+	param=PARAMLIST_PARAM(arg_node);
+	var=PARAM_VAR(param);
+	if(checkVariableExist(var,arg_info))
+	{
+		shadowingvariable=MEMmalloc(sizeof(struct variablelist));
+		shadowingvariable->varvardec=COPYdoCopy(var);
+		shadowingvariable->next=INFO_SHADOWVARIABLELIST(arg_info);
+		INFO_SHADOWVARIABLELIST(arg_info)=shadowingvariable;
+	}
+	// If the param has array dimension specification:
+	if(PARAM_VARNUMLIST(param) != NULL)
+	{
 
-  DBUG_RETURN (arg_node); 
-}
-// returns a statementlist
-node *SEParraydefinitionhandler(node *arg_node, info *arg_info)
-{
-  node *curr, *tail, *vardec, *var, *varCopyExpr, *varCopyAssign, *funcall;
-  node *statement, *funvar, *yetanothervar, *source, *assignment, *arr_internal_assignment;
-  node *vardeclist, *statementlist, *newexprlist, *funcallstat, *arrstatement, *arrstatementlist;
+		varnumlist = PARAM_VARNUMLIST(param);
 
-  DBUG_ENTER("SEParraydefinitionhandler");
 
-    vardeclist = NULL;
-    newexprlist = NULL;
-    arrstatementlist = NULL;
-    tail = NULL;
+		newParamlist=NULL;
 
-    // Processing the exprlist which is part of "array declaration" in the vardec.
-    curr = VARDEC_EXPRLIST(arg_node);
+		while(varnumlist!=NULL)
+		{
 
-    //Pre-prepare a slot for the function call __allocate statement
-    funvar = TBmakeVar("__allocate", NULL);
-    funcall = TBmakeFuncall(funvar, NULL);
-    funcallstat = TBmakeStatement(funcall);
+			varornum=VARNUMLIST_VARORNUM(varnumlist);
+			if(NODE_TYPE(varornum)==N_var)
+			{
 
-    while ( NULL != curr)
-    {
-      var = TBmakeVar(SEPgenvarname(), NULL)
-      vardec = TBmakeVardec(T_int, NULL, var, NULL);
-      vardeclist = TBmakeVardeclist(vardec, vardeclist);
+				var=COPYdoCopy(varornum);
 
-      // Put the newly created variable into our compiler defined bag.
-       compilerdefvar = MEMmalloc(sizeof(varbag));
-       VARBAG_DECL(compilerdefvar) = VARDEC_VAR(arg_node);
-       VARBAG_NEXT(compilerdefvar) = INFO_COMPILERDEFVARS(arg_info);
-       INFO_COMPILERDEFVARS(arg_info) = compilerdefvar;
+				newParam=TBmakeParam(T_int,NULL,var);
 
-      // Add the corresponding expr into the newexprlist being formed
-      varCopyExpr = MEMcopy(sizeof(node), var);
-      newexprlist = TBmakeExprlist(varCopyExpr, newexprlist);
-      
+				if(checkVariableExist(var,arg_info)==TRUE)
+				{
 
-      // Create assignment statements for every internal variable created in this loop (the ones that occur in the function call)
-      varCopyAssign = MEMcopy(sizeof(node), var);
-      arrstatement = TBmakeAssign(varCopyAssign, EXPRLIST_EXPR(curr));
+					shadowingvariable=MEMmalloc(sizeof(struct variablelist));
+					shadowingvariable->varvardec=COPYdoCopy(var);
+					shadowingvariable->next=INFO_SHADOWVARIABLELIST(arg_info);
+					INFO_SHADOWVARIABLELIST(arg_info)=shadowingvariable;
+				}
 
-      //add this statement to our bag, corresponding to the variable used.
-      VARBAG_STMTS(compilerdefvar)[0] = arrstatement;
-      // Also add the pre-prepared function call statement to the bag.
-      VARBAG_STMTS(funcallstat)[1] = funcallstat;  // this is going to be like a placeholder which gets filled in outside the loop.
-      //// OBSERVATION (ABOVE): every var in the bag would refer to the same funcall statement and that is what we intend to do.
+				if(newParamlist==NULL)
+				{
+					// first time we enter the loop, set the tail.
+					newParamlist=TBmakeParamlist(newParam,newParamlist);
+					tail = newParamlist;
 
-      if (NULL == arrstatementlist)
-      {
-        // Mark the tail: Its the first statement that we create in this while loop.
-          arrstatementlist = TBmakeStatementlist(arrstatement, arrstatementlist);
-          tail = arrstatementlist;
-      }
-      else
-      {
-        // This is not the first time we are entering the while loop if we are here.
-        arrstatementlist = TBmakeStatementlist(arrstatement, arrstatementlist);
-      }
-      curr = EXPRLIST_NEXT(curr);
-    }
-    
-    // Create a statement which is a funcall, passing in the exprlist formed above.
-    FUNCALL_EXPRLIST(funcall) = newexprlist;
-    
-    // Now, we assign the __allocate() funcall to the newly created variable
-    // like: <uservariable> = __allocate(__1, __2);
-    yetanothervar = MEMcopy(sizeof(node), VARDEC_VAR(arg_node));
-    arr_internal_assignment = TBmakeAssign(yetanothervar, EXPRLIST_EXPR(curr));
-    arrstatement = TBmakeStatement(arr_internal_assignment);
-    // Now collate the funcall statement and this newly added assignment statement into a new statementlist.
-    arrstatementlist = TBmakeStatementlist(arrstatement, arrstatementlist);
-    arrstatementlist = TBmakeStatementlist(funcallstat, arrstatementlist);
+				}
+				else
+				{
+					newParamlist=TBmakeParamlist(newParam,NULL);
+					PARAMLIST_NEXT(prevparamlist)=newParamlist;
+					printf("\nafter paramlist");
+				}
+				prevparamlist=newParamlist;
+			}
 
-    DBUG_RETURN(arrstatementlist);
+			varnumlist=VARNUMLIST_NEXT(varnumlist);
+		}
+
+		//eg int a, int [m,n]b, int c => c->b->n->m->a. the below code does this insertion
+		PARAMLIST_NEXT(prevparamlist)=PARAMLIST_NEXT(arg_node); // m->a
+		PARAMLIST_NEXT(arg_node)=tail; // b->n
+	}
+
+	INFO_PREVPARAMLIST(arg_info)=arg_node;
+
+	PARAMLIST_NEXT(arg_node) = TRAVopt(PARAMLIST_NEXT(arg_node), arg_info);
+
+	DBUG_RETURN (arg_node);
 }
 
-// Beware! Complex function that has taken more than 12 hours to code :)
-node *SEPvardec(node *arg_node, info * arg_info)
+
+/*******************************************************************
+ Hooks into funbody traversal to work on vardeclist transformations
+ ********************************************************************/
+node *SEPfunbody (node *arg_node, info * arg_info)
 {
-  node *curr, *tail, *vardec, *var, *varCopyExpr, *varCopyAssign, *funcall;
-  node *statement, *funvar, *yetanothervar, *source, *assignment, *arr_internal_assignment;
-  node *vardeclist, *statementlist, *newexprlist, *funcallstat, *arrstatement, *arrstatementlist;
+	DBUG_ENTER("SEPfunbody");
+	struct scopedvariable *functionscopearray,*functionscopedshadow;
 
-  varbag *namecollision, *compilerdefvar;
+	bool createscopearray,createscopeshadow;
 
-  DBUG_ENTER("SEPvardec");
 
-  VARDEC_EXPR(arg_node) = TRAVopt(VARDEC_EXPR(arg_node), arg_info);  
 
-  VARDEC_VAR(arg_node) = TRAVdo(VARDEC_VAR(arg_node), arg_info); 
 
-  VARDEC_EXPRLIST(arg_node) = TRAVopt(VARDEC_EXPRLIST(arg_node), arg_info);   
 
-    vardeclist = NULL;
-    newexprlist = NULL;
-    arrstatementlist = NULL;
-    tail = NULL;
+	createscopearray=FALSE;
+	createscopeshadow=FALSE;
 
-    if(ispotentialcollision(VARDEC_VAR(arg_node))
-    {
-      // NOTE: NEVER use VARBAG_STMTLIST(n) here!
-       namecollision = MEMmalloc(sizeof(varbag));
-       VARBAG_TYPE(namecollision)=VARDEC;
-       VARBAG_DECL(namecollision) = VARDEC_VAR(arg_node); // pass the danger variable.
-       VARBAG_NEXT(namecollision) = INFO_USERDEFVARS(arg_info);
-       INFO_USERDEFVARS(arg_info) = namecollision;
-    }
+	FUNBODY_VARDECLIST(arg_node) =TRAVopt(FUNBODY_VARDECLIST(arg_node),arg_info);
 
-  // Array declaration being handled.
-  if (NULL != VARDEC_EXPRLIST(arg_node))
-  {
-/*    // Processing the exprlist which is part of "array declaration".
-    curr = VARDEC_EXPRLIST(arg_node);
+	printf("\n FINISHED TRAVERSING VARDECLIST in function body");
 
-    //Pre-prepare a slot for the function call __allocate statement
-    funvar = TBmakeVar("__allocate", NULL);
-    funcall = TBmakeFuncall(funvar, NULL);
-    funcallstat = TBmakeStatement(funcall);
+	/*
+	 * Do not include the compiler defined variables in this list
+	 */
 
-    while ( NULL != curr)
-    {
-      var = TBmakeVar(SEPgenvarname(), NULL)
-      vardec = TBmakeVardec(T_int, NULL, var, NULL);
-      vardeclist = TBmakeVardeclist(vardec, vardeclist);
+	if(INFO_BUILDVARLIST(arg_info)!=NULL)
+	{
+		printf("\n creating a localdef");
+		functionscopearray=MEMmalloc(sizeof(struct scopedvariable));
+		functionscopearray->head=INFO_BUILDVARLIST(arg_info);
+		functionscopearray->next=INFO_HEADSCOPEDARRAY(arg_info);
+		INFO_HEADSCOPEDARRAY(arg_info)=functionscopearray;
+		/*
+		 * Memory released will be done when the scope variable is released.
+		 */
+		INFO_BUILDVARLIST(arg_info)=NULL;
+		createscopearray=TRUE;
+		printf("\n done with a localdef");
+	}
 
-      // Put the newly created variable into our compiler defined bag.
-       compilerdefvar = MEMmalloc(sizeof(varbag));
-       VARBAG_DECL(compilerdefvar) = VARDEC_VAR(arg_node);
-       VARBAG_NEXT(compilerdefvar) = INFO_COMPILERDEFVARS(arg_info);
-       INFO_COMPILERDEFVARS(arg_info) = compilerdefvar;
 
-      // Add the corresponding expr into the newexprlist being formed
-      varCopyExpr = MEMcopy(sizeof(node), var);
-      newexprlist = TBmakeExprlist(varCopyExpr, newexprlist);
-      
+	if(INFO_SHADOWVARIABLELIST(arg_info)!=NULL)
+	{
+		printf("\n creating a shadow variable");
+		functionscopedshadow=MEMmalloc(sizeof(struct scopedvariable));
+		functionscopedshadow->head=INFO_SHADOWVARIABLELIST(arg_info);
+		functionscopedshadow->next=INFO_SHADOWVARIABLESCOPE(arg_info);
+		INFO_SHADOWVARIABLESCOPE(arg_info)=functionscopedshadow;
+		/*
+		 * Memory released will be done when the scope variable is released.
+		 */
+		INFO_SHADOWVARIABLELIST(arg_info)=NULL;
+		createscopeshadow=TRUE;
+		printf("\n done with a shadow variable");
+	}
 
-      // Create assignment statements for every internal variable created in this loop (the ones that occur in the function call)
-      varCopyAssign = MEMcopy(sizeof(node), var);
-      arrstatement = TBmakeAssign(varCopyAssign, EXPRLIST_EXPR(curr));
 
-      //add this statement to our bag, corresponding to the variable used.
-      VARBAG_STMTS(compilerdefvar)[0] = arrstatement;
-      // Also add the pre-prepared function call statement to the bag.
-      VARBAG_STMTS(funcallstat)[1] = funcallstat;  // this is going to be like a placeholder which gets filled in outside the loop.
-      //// OBSERVATION (ABOVE): every var in the bag would refer to the same funcall statement and that is what we intend to do.
+	FUNBODY_STATEMENTLIST(arg_node) = TRAVopt(FUNBODY_STATEMENTLIST(arg_node), arg_info);
+	//NO statement case
+	if(INFO_LSTATEMENTLISTHEAD(arg_info) != NULL)
+	{
+		FUNBODY_STATEMENTLIST(arg_node)=INFO_LSTATEMENTLISTHEAD(arg_info);
+		INFO_LSTATEMENTLISTHEAD(arg_info)=NULL;
+		INFO_LSTATEMENTLIST(arg_info) = NULL;
+	}
+	printf("\n after adding stmt");
 
-      if (NULL == arrstatementlist)
-      {
-        // Mark the tail: Its the first statement that we create in this while loop.
-          arrstatementlist = TBmakeStatementlist(arrstatement, arrstatementlist);
-          tail = arrstatementlist;
-      }
-      else
-      {
-        // This is not the first time we are entering the while loop if we are here.
-        arrstatementlist = TBmakeStatementlist(arrstatement, arrstatementlist);
-      }
-      curr = EXPRLIST_NEXT(curr);
-    }
-    
-    // Create a statement which is a funcall, passing in the exprlist formed above.
-    FUNCALL_EXPRLIST(funcall) = newexprlist;
-    
-    // Now, we assign the __allocate() funcall to the newly created variable
-    // like: <uservariable> = __allocate(__1, __2);
-    yetanothervar = MEMcopy(sizeof(node), VARDEC_VAR(arg_node));
-    arr_internal_assignment = TBmakeAssign(yetanothervar, EXPRLIST_EXPR(curr));
-    arrstatement = TBmakeStatement(arr_internal_assignment);
-    // Now collate the funcall statement and this newly added assignment statement into a new statementlist.
-    arrstatementlist = TBmakeStatementlist(arrstatement, arrstatementlist);
-    arrstatementlist = TBmakeStatementlist(funcallstat, arrstatementlist);
-*/
-    arrstatementlist = SEParraydefinitionhandler(arg_node, arg_info);
-  }
 
-  // NON-ARRAY variable declaration being handled.
+	// prepend the newly formed local vardeclist to the funbody's vardeclist.
+	if(INFO_LVARDECLIST(arg_info)!=NULL)
+	{
+		VARDECLIST_NEXT(FUNBODY_VARDECLIST(arg_node)) =INFO_LVARDECLIST(arg_info) ;
+	}
+	INFO_LVARDECLIST(arg_info) = NULL;
 
-  // ARRAY INIT should be handled in the next phase. Not here
-  if ( NULL != VARDEC_EXPR(arg_node))
-  {
-    source = VARDEC_VAR(arg_node);
-    var = MEMcopy(sizeof(node), source);
+	FUNBODY_LOCALFUNDEFLIST(arg_node) = TRAVopt(FUNBODY_LOCALFUNDEFLIST(arg_node), arg_info);
 
-    assignment = TBmakeAssign(var, VARDEC_EXPR(arg_node) );
-    VARDEC_EXPR(arg_node) = NULL;
+	if(createscopearray)
+	{
+		printf("\n inside scoped array");
+		functionscopearray=INFO_HEADSCOPEDARRAY(arg_info);
+		INFO_HEADSCOPEDARRAY(arg_info)=INFO_HEADSCOPEDARRAY(arg_info)->next;
+		freescopedvariable(functionscopearray);
+		printf("\n After scoped array");
+		functionscopearray=NULL;
+	}
 
-    statement = TBmakeStatement(assignment);    
+	if(createscopeshadow)
+	{
+		printf("\n inside shadow array");
+		functionscopedshadow=INFO_SHADOWVARIABLESCOPE(arg_info);
+		INFO_SHADOWVARIABLESCOPE(arg_info)=INFO_SHADOWVARIABLESCOPE(arg_info)->next;
+		freescopedvariable(functionscopedshadow);
 
-    if ( TRUE == INFO_ISGLOBAL(arg_info))
-    { 
-      if (NULL != tail)
-      { 
-        // Creating a list that holds the latest assignment and the ones formed
-        // in the array declaration section.
-        statementlist = TBmakeStatementlist(statement, arrstatementlist);  
+		functionscopedshadow=NULL;
+		printf("\n removing shadow");
+	}
 
-        // Joining our newly formed array initialization statments to the 
-        // recieved info structure (prefixing our list to the original)
-        STATEMENTLIST_NEXT(tail) = INFO_GSTATEMENTLIST(arg_info);
-        INFO_GVARDECLIST(arg_info)  = vardeclist;
-      }
-      else
-      {
-        // In case we dont have array side initializations, just create a statementlist 
-        // with the assignment statement that we have.
-        statementlist = TBmakeStatementlist(statement, INFO_GSTATEMENTLIST(arg_info));
-      }
+	DBUG_RETURN (arg_node);
+}
 
-      //Update the info structure, with the final joined statement list. 
-      //Pipe looks like: [[ GSTATMENTLIST(arg_info);<-- ASSIGNMENT||ARRAYLIST||origGSTATEMENTLIST(arg_info); ]]
-      INFO_GSTATEMENTLIST(arg_info) = statementlist;
 
-    }
-    else // LSTATEMENT :)
-    {
-      if (NULL != tail)
-      { 
-        // Creating a list that holds the latest assignment and the ones formed
-        // in the array declaration section.
-        statementlist = TBmakeStatementlist(statement, arrstatementlist);  
-
-        // Joining our newly formed array initialization statments to the 
-        // recieved info structure (prefixing our list to the original)
-        STATEMENTLIST_NEXT(tail) = INFO_LSTATEMENTLIST(arg_info);;
-        INFO_LVARDECLIST(arg_info)  = vardeclist;
-      }
-      else
-      {
-        // In case we dont have array side initializations, just create a statementlist 
-        // with the assignment statement that we have.
-        statementlist = TBmakeStatementlist(statement, INFO_LSTATEMENTLIST(arg_info));
-      }
-
-      //Update the info structure, with the final joined statement list. 
-      //Pipe looks like: [[ GSTATMENTLIST(arg_info);<-- ASSIGNMENT||ARRAYLIST||origGSTATEMENTLIST(arg_info); ]]
-      INFO_LSTATEMENTLIST(arg_info) = statementlist;
-    }
-  } 
-  else
-  {
-      if(NULL != tail)
-      {
-        if ( TRUE == INFO_ISGLOBAL(arg_info))
-        {  
-            STATEMENTLIST_NEXT(tail) = INFO_GSTATEMENTLIST(arg_info);
-           INFO_GVARDECLIST(arg_info)  = vardeclist;
-        }
-        else
-        {
-            STATEMENTLIST_NEXT(tail) = INFO_LSTATEMENTLIST(arg_info);;
-            INFO_LVARDECLIST(arg_info)  = vardeclist;
-        }    
-      } 
-  }
-
-  DBUG_RETURN (arg_node); 
+node *SEPenclosedblock(node *arg_node, info * arg_info)
+{
+	DBUG_ENTER("SEPstatementlist");
+	INFO_ENLCOSEDBLOCKCOUNT(arg_info)++;
+	ENCLOSEDBLOCK_STATEMENTLIST(arg_node)=TRAVdo(ENCLOSEDBLOCK_STATEMENTLIST(arg_node),arg_info);
+	INFO_ENLCOSEDBLOCKCOUNT(arg_info)--;
+	DBUG_RETURN(arg_node);
 }
 
 node *SEPstatementlist (node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("SEPstatementlist");
+	node *statementlist;
+	DBUG_ENTER("SEPstatementlist");
 
-  STATEMENTLIST_STATEMENT(arg_node) = TRAVdo(STATEMENTLIST_STATEMENT(arg_node), arg_info);  
+	STATEMENTLIST_STATEMENT(arg_node) = TRAVdo(STATEMENTLIST_STATEMENT(arg_node), arg_info);
 
-  STATEMENTLIST_NEXT(arg_node) = TRAVopt(STATEMENTLIST_NEXT(arg_node), arg_info); 
+	/*
+	 * the following code will append assignment statement in for loops
+	 */
 
-  if(NULL == STATEMENTLIST_NEXT(arg_node))  
-  {
-    STATEMENTLIST_NEXT(arg_node) = INFO_LSTATEMENTLIST(arg_info);
-  }
+	if(INFO_APPENDSTATEMENT(arg_info)!=NULL)
+	{
+		printf("\ninside append statement");
+		statementlist=TBmakeStatementlist(INFO_APPENDSTATEMENT(arg_info),STATEMENTLIST_NEXT(arg_node));
+		STATEMENTLIST_NEXT(arg_node)=statementlist;
+		INFO_APPENDSTATEMENT(arg_info)=NULL;
+	}
+	else
+		statementlist=arg_node;
 
-  DBUG_RETURN (arg_node); 
+	STATEMENTLIST_NEXT(arg_node) = TRAVopt(STATEMENTLIST_NEXT(arg_node), arg_info);
+
+	if(NULL == STATEMENTLIST_NEXT(arg_node) && INFO_ENLCOSEDBLOCKCOUNT(arg_info)==0)
+	{
+		STATEMENTLIST_NEXT(arg_node) = INFO_LSTATEMENTLISTHEAD(arg_info);
+		INFO_LSTATEMENTLIST(arg_info) = NULL;
+		INFO_LSTATEMENTLISTHEAD(arg_info)=NULL;
+	}
+
+	DBUG_RETURN (arg_node);
 }
 
-/*******************************************************************
- Hooks into funbody traversal to work on vardeclist transformations
-********************************************************************/
-node *SEPfunbody (node *arg_node, info * arg_info)
+/*
+node *SEPstatement(node *arg_node, info * arg_info)
 {
-  DBUG_ENTER("SEPfunbody");
-
-  FUNBODY_VARDECLIST(arg_node) =TRAVopt(FUNBODY_VARDECLIST(arg_node),arg_info);
-
-  FUNBODY_STATEMENTLIST(arg_node) = TRAVopt(FUNBODY_STATEMENTLIST(arg_node), arg_info);
-
-  INFO_LSTATEMENTLIST(arg_info) = NULL;
-
-  // prepend the newly formed local vardeclist to the funbody's vardeclist.
-  VARDECLIST_NEXT(INFO_LVARDECLIST(arg_info)) = FUNBODY_VARDECLIST(arg_node);
-
-  INFO_LVARDECLIST(arg_info) = NULL;
-
-  FUNBODY_LOCALFUNDEFLIST(arg_node) = TRAVopt(FUNBODY_LOCALFUNDEFLIST(arg_node), arg_info);
-
-  DBUG_RETURN (arg_node); 
+	DBUG_ENTER("SEPStatement");
+	if(NODE_TYPE (STATEMENT_SET_STATEMENT(arg_node)) == N_forstat)
+	{
+		TRAVpush(TR_rename);
+		STATEMENT_SET_STATEMENT(arg_node) =TRAVdo(STATEMENT_SET_STATEMENT(arg_node),arg_info);
+		TRAVpop();
+	}
+	else
+		STATEMENT_SET_STATEMENT(arg_node) =TRAVdo(STATEMENT_SET_STATEMENT(arg_node),arg_info);
+	DBUG_RETURN(arg_node);
 }
+*/
 
-/**************************************************************
-* This kicks in, when a global or definition is traversed.
-* If an initialization is detected, it is converted to 
-* a declaration and an assignment is added to the 
-* info structure.
-***************************************************************/
-node *SEPvardeclistlocalfundef (node *arg_node, info * arg_info)
+node *SEPforstat (node *arg_node,info *arg_info)
 {
+	node *forinit,*varnode,*varnodecopy,*vardec,*vardeccopy,*vardeclist,*expr,*assign,*statement;
+	node *statementlist;
+	char *id;
+	char *parentid,*parentprevid;
+	DBUG_ENTER("SEPforstat");
 
-  DBUG_ENTER("SEPvardeclistlocalfundef");
-  
-  // setting that now we are processing global declarations
-  INFO_ISGLOBAL(arg_info) = TRUE; 
+	/*
+	 *  the block will have to be traversed first so that the order of
+	 * statement assignment is maintained in case of nested for loops
+	 *
+	 */
+	forinit=FORSTAT_VARDEC(arg_node);
+	id=SEPgenvarname(arg_info);
+	parentid=INFO_FORID(arg_info);
+	parentprevid=INFO_PREVFORID(arg_info);
+	INFO_PREVFORID(arg_info)=VAR_NAME(VARDEC_VAR(forinit));
+	INFO_FORID(arg_info)=id;
+	FORSTAT_BLOCK(arg_node) = TRAVdo(FORSTAT_BLOCK(arg_node), arg_info);
 
-  VARDECLISTLOCALFUNDEF_VARDECLIST(arg_node) =TRAVopt(VARDECLISTLOCALFUNDEF_VARDECLIST(arg_node),arg_info);
 
-  INFO_ISGLOBAL(arg_info) = FALSE;
+	TRAVpush(TR_rename);
+	//this is for renaming
+	FORSTAT_BLOCK(arg_node) = TRAVdo(FORSTAT_BLOCK(arg_node), arg_info);
 
-  VARDECLISTLOCALFUNDEF_LOCALFUNDEF(arg_node) =TRAVopt(VARDECLISTLOCALFUNDEF_LOCALFUNDEF(arg_node),arg_info);
+	//FORSTAT_VARDEC(arg_node)=TRAVdo(FORSTAT_VARDEC(arg_node),arg_info);
+	//if(VARDEC_EXPR(forinit)==NULL)
+		//printf("\nEXPR NULL");
+	expr=COPYdoCopy(VARDEC_EXPR(forinit));
+	expr=TRAVopt(expr,arg_info);
 
-  DBUG_RETURN (arg_node); 
+	varnode=TBmakeVar(id,NULL);
+	vardec=TBmakeVardec(T_int,NULL,varnode,NULL);
+	vardeclist=TBmakeVardeclist(vardec,INFO_LVARDECLIST(arg_info));
+	INFO_LVARDECLIST(arg_info)=vardeclist;
+
+	vardeccopy=COPYdoCopy(vardec);
+
+	FORSTAT_VARDEC(arg_node)=vardeccopy;
+
+
+
+	varnodecopy=COPYdoCopy(varnode);
+
+	assign=TBmakeAssign(varnodecopy,expr);
+	statement=TBmakeStatement(assign);
+	INFO_APPENDSTATEMENT(arg_info)=statement;
+
+
+	FORSTAT_EXPR1(arg_node)=TRAVdo(FORSTAT_EXPR1(arg_node),arg_info);
+	FORSTAT_EXPR2(arg_node)=TRAVopt(FORSTAT_EXPR2(arg_node),arg_info);
+
+    TRAVpop();
+
+	INFO_PREVFORID(arg_info)=parentprevid;
+	INFO_FORID(arg_info)=parentid;
+	freeNode(forinit);
+	DBUG_RETURN (arg_node);
+
 }
 
 
-/**************************************************************
-* This kicks in, when a global definition is traversed.
-* If an initialization is detected, it is converted to 
-* a declaration and an assignment is added to the 
-* info structure.
-***************************************************************/
-node *SEPusualdef (node *arg_node, info * arg_info)
+node *SEPfuncall (node *arg_node, info * arg_info)
 {
-  node *assignment, *var, *source;
-  node *statement, *statementlist, *namecollision;
+	node *exprlist,*expr,*arraydec,*vardecexprlist,*vardecexpr,*tail,*newexpr;
 
-  DBUG_ENTER("SEPusualdef");
-  
-  USUALDEF_VAR(arg_node) =TRAVdo(USUALDEF_VAR(arg_node),arg_info);
-  USUALDEF_EXPR(arg_node) =TRAVopt(USUALDEF_EXPR(arg_node),arg_info); 
-  if(ispotentialcollision(USUALDEF_VAR(arg_node))
-    {
-      // NOTE: NEVER use VARBAG_STMTLIST(n) here!
-       namecollision = MEMmalloc(sizeof(varbag));
-       VARBAG_TYPE(namecollision)=USUALDEF;
-       VARBAG_DECL(namecollision) = USUALDEF_VAR(arg_node); // pass the danger variable.
-       VARBAG_NEXT(namecollision) = INFO_USERDEFVARS(arg_info);
-       INFO_USERDEFVARS(arg_info) = namecollision;
-    } 
-  
-  if (NULL != USUALDEF_EXPR(arg_node))
-  {
-    source = USUALDEF_VAR(arg_node);
-    var = MEMcopy(sizeof(node), source);
+	node *prevexprlist=NULL,*newexprlist,*prevvardeclist;
 
-    assignment = TBmakeAssign(var, USUALDEF_EXPR(arg_node) );
-    USUALDEF_EXPR(arg_node) = NULL;
+	bool runmade=FALSE;
 
-    statement = TBmakeStatement(assignment);
-    statementlist = TBmakeStatementlist(statement, INFO_GSTATEMENTLIST(arg_info));
-    INFO_GSTATEMENTLIST(arg_info) = statementlist;
-  }
+	DBUG_ENTER("SEPfuncall");
 
-  DBUG_RETURN (arg_node); 
+	exprlist=FUNCALL_EXPRLIST(arg_node);
+
+
+	tail=NULL;
+
+	while(exprlist!=NULL)
+	{
+		expr=EXPRLIST_EXPR(exprlist);
+		if((NODE_TYPE (expr) == N_var))
+		{
+			printf("\nXXX %s",VAR_NAME(expr));
+			arraydec=returnarraydec(expr,arg_info);
+			if(arraydec!=NULL)
+			{
+
+				printf("\nName %s",VAR_NAME(VARDEC_VAR(arraydec)));
+
+				if(INFO_SHADOWVARIABLESCOPE(arg_info)==NULL || !checkshadow(VARDEC_VAR(arraydec),arg_info))
+				{
+
+					vardecexprlist=VARDEC_EXPRLIST(arraydec);
+
+					int i=0;
+					prevvardeclist=NULL;
+					while(vardecexprlist!=NULL)
+					{
+
+						vardecexpr=EXPRLIST_EXPR(vardecexprlist);
+						newexpr=COPYdoCopy(vardecexpr);
+						newexprlist=TBmakeExprlist(newexpr,NULL);
+						if(runmade==FALSE)
+						{
+							printf("In runmade i:%d",++i);
+							tail=newexprlist;
+						}
+						else if(prevvardeclist==NULL)
+						{
+							printf("In else if i:%d",++i);
+							EXPRLIST_NEXT(prevexprlist)=newexprlist;
+						}
+						else
+						{
+							printf("In else i:%d",++i);
+							EXPRLIST_NEXT(prevvardeclist)=newexprlist;
+						}
+						prevvardeclist=newexprlist;
+						vardecexprlist=EXPRLIST_NEXT(vardecexprlist);
+						runmade=TRUE;
+					}
+
+					EXPRLIST_NEXT(newexprlist)=exprlist;
+				}
+			}
+
+		}
+
+		runmade=TRUE;
+		prevexprlist=exprlist;
+		exprlist=EXPRLIST_NEXT(exprlist);
+	}
+	if(tail!=NULL)
+	{
+		FUNCALL_EXPRLIST(arg_node)=tail;
+	}
+	if(FUNCALL_EXPRLIST(arg_node)!=NULL)
+		PRTdoPrint(FUNCALL_EXPRLIST(arg_node));
+
+	DBUG_RETURN (arg_node);
 }
 
-node *SEParraydef (node *arg_node, info * arg_info)
-{
-  node *curr, *tail, *vardec, *var, *varCopyExpr, *varCopyAssign, *funcall;
-  node *statement, *funvar, *yetanothervar, *source, *assignment, *arr_internal_assignment;
-  node *vardeclist, *statementlist, *newexprlist, *funcallstat, *arrstatement, *arrstatementlist;
-
-  DBUG_ENTER("SEParraydef");
-
-  ARRAYDEF_EXPRLIST(arg_node) = TRAVdo(ARRAYDEF_EXPRLIST(arg_node), arg_info);  
-
-  ARRAYDEF_VAR(arg_node) = TRAVdo(ARRAYDEF_VAR(arg_node), arg_info); 
-
-    if(ispotentialcollision(ARRAYDEF_VAR(arg_node))
-    {
-      // NOTE: NEVER use VARBAG_STMTLIST(n) here!
-       namecollision = MEMmalloc(sizeof(varbag));
-       VARBAG_TYPE(namecollision)=ARRAYDEF;
-       VARBAG_DECL(namecollision) = ARRAYDEF_VAR(arg_node); // pass the danger variable.
-       VARBAG_NEXT(namecollision) = INFO_USERDEFVARS(arg_info);
-       INFO_USERDEFVARS(arg_info) = namecollision;
-    }
-  
-  arrstatementlist = SEParraydefinitionhandler(arg_node, arg_info);
-  
-  if(NULL != tail)
-  {
-    STATEMENTLIST_NEXT(tail) = INFO_GSTATEMENTLIST(arg_info);
-    INFO_GVARDECLIST(arg_info)  = vardeclist;
-  } 
-  DBUG_RETURN (arg_node); 
-}
-
-
-/** <!--******************************************************************-->
- *
- * @fn SEPinstr
- *
- * @brief Prints the node and its sons/attributes
- *
- * @param arg_node BinOp node to process
- * @param arg_info pointer to info structure
- *
- * @return processed node
- *
- *************************************************************************** /
 /******************************************************************************
    Function that adds __init() to the syntax tree
    NOTE: syntax tree is modified by this function 
-*******************************************************************************/
-void *SEPintroduceInit(node *syntaxtree, info *info)
+ *******************************************************************************/
+
+node *SEPintroduceInit(node *syntaxtree, info *info)
 {
-  node *var, *header, *funbody, *init; 
-  node *vardeclistfundef, *program;
+	node *var, *header, *funbody, *init;
+	node *vardeclistfundef, *program;
+	if ( NULL == syntaxtree || NULL == INFO_GSTATEMENTLIST(info))
+	{
+		return syntaxtree;
+	}
 
-  DBUG_ENTER("SEPintroduceInit");
-  
-  if ( NULL == syntaxtree || NULL == INFO_GSTATEMENTLIST(info))
-  {
-    return syntaxtree;
-  }
+	var     = TBmakeVar(STRcpy("__init"), NULL);
+	header  = TBmakeFunheader(T_void, var, NULL);
+	funbody = TBmakeFunbody(NULL, NULL, INFO_GSTATEMENTLISTHEAD(info), NULL);
+	PRTdoPrint(INFO_GSTATEMENTLISTHEAD(info));
+	init = TBmakeLocalfundef(header, funbody);
+	INFO_GSTATEMENTLIST(info)=NULL;
+	INFO_GSTATEMENTLISTHEAD(info)=NULL;
+	vardeclistfundef = TBmakeVardeclistlocalfundef(NULL, init);
+	program = TBmakeProgram(vardeclistfundef, syntaxtree);
+	return program;
 
-  var     = TBmakeVar("__init", NULL);
-  header  = TBmakeFunheader(T_void, var, NULL);
-  funbody = TBmakeFunbody(NULL, NULL, INFO_GSTATEMENTLIST(info), NULL);
-  init = TBmakeLocalfundef(header, funbody);
-  
-  vardeclistfundef = TBmakeVardeclistlocalfundef(NULL, init);
-  program = TBmakeProgram(vardeclistfundef, syntaxtree);
-  
-  DBUG_RETURN (arg_node); 
 }
 
-node 
+node
 *SEPdoSeparateDeclInit( node *syntaxtree)
 {
-  info *info;
-  node* newsyntaxtree;
+	info *info;
+	node* newsyntaxtree;
 
-  DBUG_ENTER("SEPdoSeparateDeclInit");
+	DBUG_ENTER("SEPdoSeparateDeclInit");
 
-  DBUG_ASSERT( (syntaxtree!= NULL), "SEPdoSeparateDeclInit called with empty syntaxtree");
+	DBUG_ASSERT( (syntaxtree!= NULL), "SEPdoSeparateDeclInit called with empty syntaxtree");
 
-  printf( "\n\n------------------------------\n\n");
+	printf( "\n\n------------------------------\n\n");
 
-  info = MakeInfo();
-  
-  TRAVpush( TR_sep);
+	info = MakeInfo();
 
-  syntaxtree = TRAVdo( syntaxtree, info);
+	TRAVpush( TR_sep);
 
-  TRAVpop();
+	syntaxtree = TRAVdo( syntaxtree, info);
 
-  newsyntaxtree = SEPintroduceInit(syntaxtree, info);
+	TRAVpop();
 
-  info = FreeInfo(info);
+	newsyntaxtree = SEPintroduceInit(syntaxtree, info);
 
-  printf( "\n\n------------------------------\n\n");
+	info = FreeInfo(info);
 
-  DBUG_RETURN( newsyntaxtree);
+	printf( "\n\n------------------------------\n\n");
+
+	DBUG_RETURN( newsyntaxtree);
 }
 
 /**

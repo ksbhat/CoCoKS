@@ -64,7 +64,7 @@ static int yyerror( char *errname);
 %type <node> block statementlist statement funcall localfundef funheader param
 %type <node> paramsequence funbody localfundeflist vardeclist return vardec
 %type <node> ifblock elseblock whileblock dowhileblock forblock forinitstat 
-%type <node> arrayindexing varnumsequence arraydef arrayinit
+%type <node> arrayindexing varnumsequence arraydef arrayinit localvardeclistfundef
 %type <cbinop> binop
 %type <cmonop> monOp
 %type <ctype> type
@@ -115,10 +115,10 @@ codeblock		:	globaldef
 					$$=$1;
 				}
 				|
-				vardeclist localfundef
+				localvardeclistfundef	
 				{
 					DEBUG("IN CODEBLOCK: fundef");
-					$$=TBmakeVardeclistlocalfundef($1, $2);
+					$$=$1;
 				}
 				|
 				exportfundef
@@ -130,6 +130,19 @@ codeblock		:	globaldef
 				{
 					DEBUG("IN CODEBLOCK: fundec");
 					$$=$1;
+				}
+				;
+
+localvardeclistfundef		: vardec
+				{
+					node *vardeclist=TBmakeVardeclist($1,NULL);
+					$$=TBmakeVardeclistlocalfundef(vardeclist,NULL );
+				}
+				|
+				localfundef
+				{
+					$$=TBmakeVardeclistlocalfundef(NULL,$1 );
+					
 				}
 				;
 

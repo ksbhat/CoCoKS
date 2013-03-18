@@ -1,0 +1,12 @@
+int main()
+{
+	int j=10;
+	j=2;
+	for (int i=0,5,1)
+	{
+		printInt(1);
+		for (int j=0,i,2)
+			printInt(i);
+	}
+	printInt(5);
+}

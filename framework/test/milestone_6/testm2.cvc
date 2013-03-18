@@ -1,0 +1,12 @@
+int __01;
+int hello()
+{
+	hello();
+	for (int i=0,5,1)
+	{
+		for(int j=i,10,1)
+		{
+			printInt(2);
+		}
+	}
+}

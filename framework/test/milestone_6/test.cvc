@@ -1,0 +1,10 @@
+int [1,1]a;
+int main()
+{
+	int i=5;
+	int j=10;
+	int a;
+	int k=10;
+	int [i,k]b=[5,1];
+	i=10;
+}

@@ -1,0 +1,8 @@
+int main()
+{
+	for (int i=0,4,1)
+	{
+		for (int j=i,i,i)
+			printInt(i);
+	}
+}

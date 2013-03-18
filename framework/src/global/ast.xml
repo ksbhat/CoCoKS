@@ -30,16 +30,27 @@
 			<traversal id="SEP" name="Separate Decl / Initializations" default="sons"
 				include="separate_decl_init.h" >
 				<travuser>
+		                	<node name="Program"/>
+		                	<node name="VardeclistLocalFunDef" />
 		                	<node name="UsualDef"/>
+		                	<node name="ArrayDef"/>
 		                	<node name="VarDec"/>
-		                	<node name="VarDecList"/>
+		                	<node name="ParamList"/>
+		                	<node name="FunBody"/>
 		                	<node name="StatementList"/>
 		                	<node name="FunCall"/>
-		                	<node name="Paramlist"/>
-		                	<node name="ForStat"/>
-							<node name="ArrayInit" />
-        		</travuser>
+		          			<node name="ForStat"/>
+                			<node name="EnclosedBlock"/>      	
+		                	
+		        </travuser>
 			</traversal>
+			<traversal id="RENAME" name="Rename ids" default="sons"
+            include="rename.h">
+            <travuser>
+                <node name="Var"/>
+                
+            </travuser>
+        </traversal>
 		</general>
 	</phases>
 	<nodesets>
@@ -232,7 +243,7 @@
 			</attributes>
 		</node>
 
-		<node name="VardeclistLocalFundef">
+		<node name="VardeclistLocalFunDef">
 			<sons>
 				<son name="Vardeclist">
 					<targets>

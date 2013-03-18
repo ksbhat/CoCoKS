@@ -11,14 +11,19 @@
 
 #include "types.h"
 
+extern node *SEPprogram(node *arg_node, info * arg_info);
+extern node *SEPvardeclistlocalfundef (node *arg_node, info * arg_info);
 extern node *SEPusualdef (node *arg_node, info * arg_info);
+extern node *SEParraydef (node *arg_node, info * arg_info);
 extern node *SEPvardec (node *arg_node, info * arg_info);
-extern node *SEPvardeclist (node *arg_node, info * arg_info);
+extern node *SEPparamlist (node *arg_node, info * arg_info);
+extern node *SEPfunbody (node *arg_node, info * arg_info);
 extern node *SEPstatementlist (node *arg_node, info * arg_info);
 extern node *SEPfuncall (node *arg_node, info * arg_info);
-extern node *SEPparamlist (node *arg_node, info * arg_info);
 extern node *SEPforstat (node *arg_node, info * arg_info);
-extern node *SEParrayinit(node *arg_node, info * arg_info);
+extern node *SEPvar (node *arg_node,info *arg_info);
+//extern node *SEPstatement(node *arg_node, info * arg_info);
+extern node *SEPenclosedblock(node *arg_node, info * arg_info);
 
 extern node *SEPdoSeparateDeclInit( node *syntaxtree);
 
