@@ -1,0 +1,31 @@
+Program---> First all the global variable will be processed & fundec will be processed then the funbody will be processed.
+
+Fundec ---> No Change required as the paramlist is modified to handle the array expansion
+
+GlobalDec --> No impact, 
+		One clarification required, extern did not work for the variable need to check that with Simon.
+		Another clarification is if it is allowed to declare a array as extern would the index also be extern variable (my observation is yes)
+
+GlobalDef --> Global variable analysed and in case they have an expression they will be assigned to the separate statement
+	      Array will not have the expression. But will have to add the statement __allocate with the dimensions in init function. Array will have 		      to be added to separate bag so that in case of the function call in a function the dimension can be replaced.
+
+UsualDef ---> Impact the global variable. This will add statement to the __init function
+
+ArrayDef---> This is for global array variable with export function. This will create a bag of array variable which will substituted in the respective 		      function call
+
+Local Variable Dec---> This will handle both the local function variable and the variable in the global scope of the module. There is a printf
+			stmt which should changed to error. This will also create list of the array variable it shadows.This will be useful for 			function calls
+
+ParamList ---> This will change the signature of the function. This is as also added to shadowed variable list.
+
+Fundef	--> We dont have an impact at this level
+
+Funbody --> This function will create a scope at the for all the local variable.
+
+Statementlist --> Changes made in a manner that before the execution of the for loop the initialisation statement will be added.
+
+forstat ---> The first parameter will be vardec. Need to Confirm if this is correct. The body will be traversed twice. Hopeless case of trying 				change the induction value in the body. This uses the rename framework provided.
+
+funccall ---> This will check each expression if it is a var and if that satisfies the condition it will check if it is a array and then it is not 			shadowed by a non local variable.  If all these parameter are satisfied then function parameter will be changed.
+
+

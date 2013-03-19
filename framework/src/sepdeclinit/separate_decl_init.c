@@ -935,7 +935,8 @@ node *SEPfunbody (node *arg_node, info * arg_info)
 	// prepend the newly formed local vardeclist to the funbody's vardeclist.
 	if(INFO_LVARDECLIST(arg_info)!=NULL)
 	{
-		VARDECLIST_NEXT(FUNBODY_VARDECLIST(arg_node)) =INFO_LVARDECLIST(arg_info) ;
+		VARDECLIST_NEXT(INFO_LVARDECLIST(arg_info)) = FUNBODY_VARDECLIST(arg_node);
+		FUNBODY_VARDECLIST(arg_node)=INFO_LVARDECLIST(arg_info);
 	}
 	INFO_LVARDECLIST(arg_info) = NULL;
 
@@ -1105,11 +1106,17 @@ node *SEPfuncall (node *arg_node, info * arg_info)
 	while(exprlist!=NULL)
 	{
 		expr=EXPRLIST_EXPR(exprlist);
+
 		if((NODE_TYPE (expr) == N_var))
 		{
 			printf("\nXXX %s",VAR_NAME(expr));
+
 			arraydec=returnarraydec(expr,arg_info);
-			if(arraydec!=NULL)
+			if(VAR_EXPRLIST(expr)==NULL)
+			{
+				printf ("\nFor array %s expr list is NULL",VAR_NAME(expr));
+			}
+			if(arraydec!=NULL && VAR_EXPRLIST(expr)==NULL)
 			{
 
 				printf("\nName %s",VAR_NAME(VARDEC_VAR(arraydec)));
