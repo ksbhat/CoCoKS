@@ -1,0 +1,87 @@
+
+Program:
+This will make sure that the global variable are processed before the functions --done
+
+Declaration phase done:
+
+Note:
+There is no distinction between id of a function and that of the variable so be careful when doing a comparision. This wasnot handled in the previous phase where only variable where compared.
+
+FunctionDec: ID will have to process and kept separate for linking.
+			 We could have an impact based on the number of parameter.
+			 Array Parameter mismatch.
+			 Return type mismatch. --done
+
+
+
+
+GlobalDEC: As of now not supported but still I could remove the ID and the add it the hash table at the global scope. --done 
+
+GLOBALDEF: No Impact.-- done
+
+Usual Def: Information like and data type is important. And add it to the hash tables at the global scope. -- done
+
+Array Def: Information like the number of index possible are important and the type of the array are important. --done
+
+Vardeclist: To build the list at the vardec level. --done
+
+Vardec : Impact in manner that stores the array variable and the local variable together. Try to store the properties of the variable which 		will help in type checking. --done
+
+FunDef: no impact because it has an export which may useful later but not at this stage. --done variable
+
+LocalFunDef: In function we note down the id and the other essential parameters so that when we loop on function we can be sure that everthing 			matches. --done
+
+FunHeader: Impact because we have id and parameter list  that might prove to be useful --done
+
+Parameter list: Useful gathering the complete information. --done
+
+Parameter list: Analyse the parameter to the information regarding the individual list. --done
+
+
+
+Funbody: has an impact because my idea is to get list of the id before I analyse the statement. So I have grasp of the id used in the functions
+
+Localfundeflist: To build an id of functions that will be used.
+
+VarNumList: No impact.
+
+No error checking so far. All error checking only at the use.
+
+
+
+
+Now it the matter of linking:
+
+Statementlist: No addition may be needed here
+
+Return: If it match with the function return specified. 
+
+Statement: First link the statements components to the matching id. You have this information from the hash-table list we already created. 
+			Once you have linked the id we can evalute the based on the information collected from the previous stage.
+
+
+
+Assignment statement: Match the ids. Then we can start with the evaluation of the expression. We can add an attribute type in ast saying the 						possible datatype for that operation so that I evaluate it at that time.
+
+IfStat: Impact
+
+Forstat: Be careful the initial parameter is defined as a vardec. This should take the normal routine.
+
+while :Impact
+
+do..while: Impact
+
+Funcall: Check the possiblities of error here. Lot of possiblities. Array be careful you have expanded the paramlist.
+
+Expression: Lets start from the bottom because we know the data types there. That can be propogated to the next stage. Until the expression 			changes the datatype of the expression. For each operation assign the list of datatype possible so that we can get an idea of it 			at an early Stage. 
+			How about using an bitmap for the possible results?
+
+
+
+
+
+
+
+
+
+

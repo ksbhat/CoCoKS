@@ -357,7 +357,7 @@ NOT
 				FILTER( FOR ); 
 			}
 
-[A-Za-z_][A-Za-z0-9_]*   { 
+[A-Za-z][A-Za-z0-9_]*   { 
 				DEBUG("line code ");
 				DEBUG(yytext);
 				

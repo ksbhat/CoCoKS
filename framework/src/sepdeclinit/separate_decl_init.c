@@ -31,22 +31,6 @@
  * INFO structure
  */
 
-typedef enum {
-	USUALDEF, VARDEC,ARRAYDEF
-} DEC_TYPE;
-
-typedef struct{
-	DEC_TYPE node_type;
-	node *var;
-	node *statements[2];
-	struct varbag *next;
-} varbag;
-
-
-
-
-
-
 static info *MakeInfo()
 {
 	info *result;
@@ -105,6 +89,7 @@ static info *FreeInfo( info *info)
 	return info;
 }
 
+// Frees single node
 void freeNode(node *arg_node)
 {
 	if(arg_node!=NULL)
@@ -112,6 +97,8 @@ void freeNode(node *arg_node)
 		MEMfree(arg_node);
 	}
 }
+
+/*
 
 void freevarlistname(struct varlistname *varlist)
 {
@@ -128,6 +115,7 @@ void freevarlistname(struct varlistname *varlist)
 	}
 	DBUG_VOID_RETURN;
 }
+ */
 
 void freevariablelist(struct variablelist *variable)
 {
@@ -152,6 +140,7 @@ void freevariablelist(struct variablelist *variable)
 
 }
 
+// Used for arrays.
 void freescopedvariable(struct scopedvariable *scopedlist)
 {
 	DBUG_ENTER("SEPfreescopedvariable");
@@ -165,54 +154,18 @@ void freescopedvariable(struct scopedvariable *scopedlist)
 }
 
 
-
 char *SEPgenvarname(info *arg_info)
 {
 	DBUG_ENTER("SEPgetvarname");
 	char szPattern[3] = "__";
-	char  *name,*clearname;
+	char  *name;
 	static int counter = 0;
-	struct varlistname *varseq;
-	bool flag;
 
-	while (TRUE)
-	{
-		flag=FALSE;
-		if(counter<10)
-		{
-			clearname=STRitoa(counter);
-			name=STRcat("0",clearname);
-			MEMfree(clearname);
-			clearname=name;
-		}
-		name = STRcat(szPattern, name);
-		MEMfree(clearname);
-		counter = (counter + 1) % NAME_COUNTER_LIMIT;
-		if(INFO_VARLISTNAME(arg_info)!=NULL)
-		{
-
-			varseq=INFO_VARLISTNAME(arg_info);
-			while(varseq!=NULL)
-			{
-
-				if(STReq(varseq->id,name))
-				{
-
-					flag=TRUE;
-				}
-				varseq=varseq->next;
-			}
-			if(!flag)
-			{
-				DBUG_RETURN(name);
-			}
-		}
-		else
-			break;
-	}
+	name = STRcat(szPattern, STRitoa(counter));
+	counter = (counter + 1) % NAME_COUNTER_LIMIT;
 	DBUG_RETURN(name);
 }
-
+/*
 bool ispotentialcollision(node *arg_node)
 {
 
@@ -234,8 +187,9 @@ bool ispotentialcollision(node *arg_node)
 	}
 	DBUG_RETURN(FALSE);
 }
+*/
 
-
+// Currently being used only for array (dimension expansion, etc) only.
 bool checkVariableExist(node *var_node,info *arg_info)
 {
 	DBUG_ENTER("SEPCheckvariableexist");
@@ -273,6 +227,7 @@ bool checkVariableExist(node *var_node,info *arg_info)
 	DBUG_RETURN(FALSE);
 }
 
+// Check the local variables that overshadow prev.ly defined arrays
 bool checkshadow(node *var_node,info *arg_info)
 {
 	DBUG_ENTER("SEPcheckshadow");
@@ -283,8 +238,6 @@ bool checkshadow(node *var_node,info *arg_info)
 
 	id= VAR_NAME(var_node);
 
-
-
 	shadow_variable=INFO_SHADOWVARIABLESCOPE(arg_info);
 	while(shadow_variable!=NULL)
 	{
@@ -292,7 +245,6 @@ bool checkshadow(node *var_node,info *arg_info)
 
 		while(variables!=NULL)
 		{
-
 			variable = variables->varvardec;
 
 			comparedid=VAR_NAME(VARDEC_VAR(variable));
@@ -311,6 +263,8 @@ bool checkshadow(node *var_node,info *arg_info)
 	DBUG_RETURN(FALSE);
 }
 
+// Used to get the dimensions of the array from its declaration
+// when we want to expand the array usage statement (like in funcall exprlist)
 node* returnarraydec(node *var_node,info *arg_info)
 {
 	char *id,*comparedid;
@@ -353,9 +307,6 @@ node *SEPprogram(node *arg_node, info * arg_info)
 
 	program=arg_node;
 
-
-
-
 	/*
 	 * First part would be to find all the global variable and assign it to __init()
 	 * to the global variable counter. This lookup is done ahead just to get idea
@@ -391,7 +342,6 @@ node *SEPprogram(node *arg_node, info * arg_info)
 		 * of the localvariablelist before the next codeblock is analysed.
 		 * For other function this will be cleared in the funbody.
 		 */
-
 
 		program=PROGRAM_NEXT(program);
 	}
@@ -440,12 +390,6 @@ node *SEPprogram(node *arg_node, info * arg_info)
 		freescopedvariable(INFO_HEADSCOPEDARRAY(arg_info));
 	}
 
-	if(INFO_VARLISTNAME(arg_info)!=NULL)
-	{
-		freevarlistname(INFO_VARLISTNAME(arg_info));
-	}
-
-
 	DBUG_RETURN(arg_node);
 }
 
@@ -464,14 +408,10 @@ node *SEPvardeclistlocalfundef (node *arg_node, info * arg_info)
 	//This will ensure that the global variables are
 	//processed first before the functions
 
-
-
 	if(INFO_VARIABLECHECK(arg_info))
 	{
 		// setting that now we are processing global declarations
 		INFO_ISGLOBAL(arg_info) = TRUE;
-
-
 
 		VARDECLISTLOCALFUNDEF_VARDECLIST(arg_node) =TRAVopt(VARDECLISTLOCALFUNDEF_VARDECLIST(arg_node),arg_info);
 
@@ -479,8 +419,6 @@ node *SEPvardeclistlocalfundef (node *arg_node, info * arg_info)
 	}
 	else
 	{
-
-
 		VARDECLISTLOCALFUNDEF_LOCALFUNDEF(arg_node) =TRAVopt(VARDECLISTLOCALFUNDEF_LOCALFUNDEF(arg_node),arg_info);
 	}
 
@@ -504,15 +442,6 @@ node *SEPusualdef (node *arg_node, info * arg_info)
 
 	USUALDEF_VAR(arg_node) =TRAVdo(USUALDEF_VAR(arg_node),arg_info);
 	USUALDEF_EXPR(arg_node) =TRAVopt(USUALDEF_EXPR(arg_node),arg_info);
-	if(ispotentialcollision(USUALDEF_VAR(arg_node)))
-	{
-		// NOTE: NEVER use VARBAG_STMTLIST(n) here!
-		var=USUALDEF_VAR(arg_node);
-		namecollision = MEMmalloc(sizeof(struct varlistname));
-		namecollision->id=MEMcopy(sizeof(char)*(STRlen(VAR_NAME(var))+1),VAR_NAME(var));
-		namecollision->next=INFO_VARLISTNAME(arg_info);
-		INFO_VARLISTNAME(arg_info)=namecollision;
-	}
 
 	if (NULL != USUALDEF_EXPR(arg_node))
 	{
@@ -543,27 +472,14 @@ node *SEParraydef (node *arg_node, info * arg_info)
 {
 	node *tail,*expr_list,*new_expr_list;
 	node *funvar,*funcall,*assignment_statement,*var,*vardec,*final_statement;
-	struct varlistname *namecollision;
+	struct varlistname;
 	struct variablelist *list;
 
 	DBUG_ENTER("SEParraydef");
 
-
-
 	ARRAYDEF_EXPRLIST(arg_node) = TRAVdo(ARRAYDEF_EXPRLIST(arg_node), arg_info);
 
 	ARRAYDEF_VAR(arg_node) = TRAVdo(ARRAYDEF_VAR(arg_node), arg_info);
-
-	if(ispotentialcollision(ARRAYDEF_VAR(arg_node)))
-	{
-		// NOTE: NEVER use VARBAG_STMTLIST(n) here!
-		var=ARRAYDEF_VAR(arg_node);
-		namecollision = MEMmalloc(sizeof(struct varlistname));
-		namecollision->id=MEMcopy(sizeof(char)*(STRlen(VAR_NAME(var))+1),VAR_NAME(var));
-		namecollision->next=INFO_VARLISTNAME(arg_info);
-		INFO_VARLISTNAME(arg_info)=namecollision;
-	}
-
 
 	tail=NULL;
 	expr_list=ARRAYDEF_EXPRLIST(arg_node);
@@ -613,23 +529,9 @@ node *SEPvardec(node *arg_node,info *arg_info)
 
 	DBUG_ENTER("SEPvardec");
 
-
-
 	VARDEC_EXPRLIST(arg_node)=TRAVopt(VARDEC_EXPRLIST(arg_node),arg_info);
 
 	expr_list=VARDEC_EXPRLIST(arg_node);
-
-	if(ispotentialcollision(VARDEC_VAR(arg_node)))
-	{
-		// NOTE: NEVER use VARBAG_STMTLIST(n) here!
-		var=VARDEC_VAR(arg_node);
-		namecollision = MEMmalloc(sizeof(struct varlistname));
-		namecollision->id=MEMcopy(sizeof(char)*(STRlen(VAR_NAME(var))+1),VAR_NAME(var));
-		namecollision->next=INFO_VARLISTNAME(arg_info);
-		INFO_VARLISTNAME(arg_info)=namecollision;
-	}
-
-
 
 	//For Array declaration
 	tail=NULL;
@@ -780,7 +682,6 @@ node *SEPvardec(node *arg_node,info *arg_info)
 	DBUG_RETURN (arg_node);
 }
 
-
 node *SEPparamlist (node *arg_node, info * arg_info)
 {
 	DBUG_ENTER("SEPparamlist");
@@ -788,11 +689,9 @@ node *SEPparamlist (node *arg_node, info * arg_info)
 	node *prevparamlist;
 	struct variablelist *shadowingvariable;
 
-
-
 	PARAMLIST_PARAM(arg_node) =TRAVdo(PARAMLIST_PARAM(arg_node),arg_info);
 
-	// PARAMLIST_NEXT(arg_node) = TRAVopt(PARAMLIST_NEXT(arg_node), arg_info);
+	//// PARAMLIST_NEXT(arg_node) = TRAVopt(PARAMLIST_NEXT(arg_node), arg_info);
 
 	param=PARAMLIST_PARAM(arg_node);
 	var=PARAM_VAR(param);
@@ -873,10 +772,6 @@ node *SEPfunbody (node *arg_node, info * arg_info)
 	struct scopedvariable *functionscopearray,*functionscopedshadow;
 
 	bool createscopearray,createscopeshadow;
-
-
-
-
 
 	createscopearray=FALSE;
 	createscopeshadow=FALSE;
@@ -1023,7 +918,7 @@ node *SEPstatement(node *arg_node, info * arg_info)
 		STATEMENT_SET_STATEMENT(arg_node) =TRAVdo(STATEMENT_SET_STATEMENT(arg_node),arg_info);
 	DBUG_RETURN(arg_node);
 }
-*/
+ */
 
 node *SEPforstat (node *arg_node,info *arg_info)
 {
@@ -1053,7 +948,7 @@ node *SEPforstat (node *arg_node,info *arg_info)
 
 	//FORSTAT_VARDEC(arg_node)=TRAVdo(FORSTAT_VARDEC(arg_node),arg_info);
 	//if(VARDEC_EXPR(forinit)==NULL)
-		//printf("\nEXPR NULL");
+	//printf("\nEXPR NULL");
 	expr=COPYdoCopy(VARDEC_EXPR(forinit));
 	expr=TRAVopt(expr,arg_info);
 
@@ -1066,25 +961,21 @@ node *SEPforstat (node *arg_node,info *arg_info)
 
 	FORSTAT_VARDEC(arg_node)=vardeccopy;
 
-
-
 	varnodecopy=COPYdoCopy(varnode);
 
 	assign=TBmakeAssign(varnodecopy,expr);
 	statement=TBmakeStatement(assign);
 	INFO_APPENDSTATEMENT(arg_info)=statement;
 
-
 	FORSTAT_EXPR1(arg_node)=TRAVdo(FORSTAT_EXPR1(arg_node),arg_info);
 	FORSTAT_EXPR2(arg_node)=TRAVopt(FORSTAT_EXPR2(arg_node),arg_info);
 
-    TRAVpop();
+	TRAVpop();
 
 	INFO_PREVFORID(arg_info)=parentprevid;
 	INFO_FORID(arg_info)=parentid;
 	freeNode(forinit);
 	DBUG_RETURN (arg_node);
-
 }
 
 
@@ -1118,19 +1009,16 @@ node *SEPfuncall (node *arg_node, info * arg_info)
 			}
 			if(arraydec!=NULL && VAR_EXPRLIST(expr)==NULL)
 			{
-
 				printf("\nName %s",VAR_NAME(VARDEC_VAR(arraydec)));
 
 				if(INFO_SHADOWVARIABLESCOPE(arg_info)==NULL || !checkshadow(VARDEC_VAR(arraydec),arg_info))
 				{
-
 					vardecexprlist=VARDEC_EXPRLIST(arraydec);
 
 					int i=0;
 					prevvardeclist=NULL;
 					while(vardecexprlist!=NULL)
 					{
-
 						vardecexpr=EXPRLIST_EXPR(vardecexprlist);
 						newexpr=COPYdoCopy(vardecexpr);
 						newexprlist=TBmakeExprlist(newexpr,NULL);
@@ -1198,7 +1086,6 @@ node *SEPintroduceInit(node *syntaxtree, info *info)
 	vardeclistfundef = TBmakeVardeclistlocalfundef(NULL, init);
 	program = TBmakeProgram(vardeclistfundef, syntaxtree);
 	return program;
-
 }
 
 node

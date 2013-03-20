@@ -51,6 +51,23 @@
                 
             </travuser>
         </traversal>
+        <traversal id="CA" name="Context Analysis" default="sons"
+				include="context_analysis.h" >
+				<travuser>
+		                	<node name="Program"/>
+		                	<node name="VardeclistLocalFunDef" />
+		                	<node name="UsualDef"/>
+		                	<node name="ArrayDef"/>
+		                	<node name="VarDec"/>
+		                	<node name="ParamList"/>
+		                	<node name="FunBody"/>
+		                	<node name="StatementList"/>
+		                	<node name="FunCall"/>
+		          			<node name="ForStat"/>
+                			<node name="EnclosedBlock"/>      	
+		                	
+		        </travuser>
+		</traversal>
 		</general>
 	</phases>
 	<nodesets>

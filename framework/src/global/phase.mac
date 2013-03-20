@@ -37,13 +37,7 @@ SUBPHASE( prt,
           ALWAYS,
           ast)      
 
-/*
-SUBPHASE( frtr, 
-          "De-allocating syntax tree representation",
-          FREEdoFreeTree, 
-          ALWAYS,
-          ast)
-*/
+
 ENDPHASE( ast) 
 
 PHASE( prir, 
@@ -69,6 +63,31 @@ SUBPHASE( frtr,
           prir)
 
 ENDPHASE( prir)
+/*
+PHASE( ca, 
+       "Performing Context Analysis",
+  ALWAYS)
+
+SUBPHASE( sca,
+          "Linking and evaluating context specific Information",
+          CAdoContextAnalysis, 
+          ALWAYS,
+          ca)
+
+SUBPHASE( prt, 
+          "Printing the intermediate representation",
+          PRTdoPrint, 
+          ALWAYS,
+          ca)      
+
+SUBPHASE( frtr, 
+          "De-allocating syntax tree representation",
+          FREEdoFreeTree, 
+          ALWAYS,
+          ca)
+
+ENDPHASE( ca)
+*/
 
 /******************************************************************************/
 
