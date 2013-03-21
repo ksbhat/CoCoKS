@@ -87,7 +87,7 @@ node *RENAMEforstat (node *arg_node,info *arg_info)
 	char *parentid,*parentprevid;
 	DBUG_ENTER("SEPforstat");
 
-	/*
+	/ *
 	 *  the block will have to be traversed first so that the order of
 	 * statement assignment is maintained in case of nested for loops
 	 *

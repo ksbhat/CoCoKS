@@ -5,11 +5,11 @@
 #define BOOL 4
 
 
-typedef {arithmeticoperation, logicaloperation, relationaloperation}opertionclassify;
+typedef enum {arithmeticoperation, logicaloperation, relationaloperation} operationclassify;
 
-typedef {binop,monop}operationtype;
+typedef enum{binaryoperation,monoperation} operationtype;
 
-typedef {inputtype,outputtype}parametertype;
+typedef enum {inputtype,outputtype}parametertype;
 
 struct operationmetadata {
 type inputtype;
@@ -17,74 +17,36 @@ type outputtype;
 }listoperation[3];
 
 
-struct binoperation 
+typedef struct binoperation 
 {
   type left;
   type right;
-  type result;
   binop operation;
-};
+}BINOPERATION;
 
-struct monoperation 
+typedef struct monoperation 
 {
   type input;
-  type result;
   monop operation;
-};
+}MONOPERATION;
 
 //input parameter from the user.
-struct operationonparameter
+typedef struct operationonparameter
 {
   operationtype optype;
   union {
-    binoperation *binaryop; //this is the reference structure for binary operations
-    monoperation *monop;  // this is the reference structure for mono operations
+    struct binoperation *binaryop; //this is the reference structure for binary operations
+    struct monoperation *monop;  // this is the reference structure for mono operations
   }operation;
   char **errorstring;
-};
+} OPERATIONONPARAMETER;
 
 
-char **parametervalue={"input","output"};
-
-
-char* printExpectedError(parametertype param)
-{
-   char *errorstring,oldstring;
-    if(param==inputtype)
-    {
-      errorstring=STRcat("Expect ",parametervalue[0]);
-    } 
-    else
-    {
-      errorstring=STRcat("Expect ",parametervalue[1]);
-    }
-    oldstring=errorstring;
-    errorstring=STRcat(errorstring," to be Integer");
-    
-    return errorstring;
-}
-
-
-char* printBooleanExpectedError(parametertype param)
-{
-    char *errorstring,oldstring;
-    if(param==inputtype)
-    {
-      errorstring=STRcat("Expect ",parametervalue[0]);
-    } 
-    else
-    {
-      errorstring=STRcat("Expect ",parametervalue[1]);
-    }
-    oldstring=errorstring;
-    errorstring=STRcat(errorstring," to be Boolean");
-    
-    return errorstring;
-}
+char *parametervalue[]={"input","output"};
 
 char* printExpectedError(parametertype param,type input)
 {
-    char *errorstring,oldstring;
+    char *errorstring,*oldstring;
     if(param==inputtype)
     {
       errorstring=STRcat("Expect ",parametervalue[0]);
@@ -95,21 +57,48 @@ char* printExpectedError(parametertype param,type input)
     }
     oldstring=errorstring;
     errorstring=STRcat(errorstring," to be");
+    MEMfree(oldstring);
     if(input==T_int)
     {
       errorstring=STRcat(errorstring," Integer");
     }
     else if(input==T_float)
     {
-      errorstring=STRcat(errorstring," T_Float"); 
+      errorstring=STRcat(errorstring," Float"); 
     }
     else
     {
-      errorstring=STRcat(errorstring," T_Bool");  
+      errorstring=STRcat(errorstring," Bool");  
     }
     return errorstring;
 }
  
+
+char* printMismatchError(parametertype param,type input)
+{
+    char *errorstring,*oldstring;
+    if(param==inputtype)
+    {
+      errorstring=STRcat("Mismatch ",parametervalue[0]);
+    } 
+    
+    oldstring=errorstring;
+    errorstring=STRcat(errorstring," Expect both to be");
+    MEMfree(oldstring);
+    if(input==T_int)
+    {
+      errorstring=STRcat(errorstring," Integer");
+    }
+    else if(input==T_float)
+    {
+      errorstring=STRcat(errorstring," Float"); 
+    }
+    else
+    {
+      errorstring=STRcat(errorstring," Bool");  
+    }
+    return errorstring;
+} 
 
 void init_arithmetic_operation()
 {
@@ -147,25 +136,25 @@ void init_operation()
 
 
 
-bool parameterverification(Type input,operationclassify oc,parametertype param)
+bool parameterverification(type input,operationclassify oc,parametertype param)
 {
   int result;
-  int number;
+
   if(param==inputtype)
   {  
-      result=input & listoperation[oc].inputparameter;
+      result=input & listoperation[oc].inputtype;
   }
   else
   {
-    result=input & listoperation[oc].outputparameter;
+    result=input & listoperation[oc].outputtype;
   } 
   if(result==input)
   {
-    return true;
+    return TRUE;
   }
   else
   {
-    return false;
+    return FALSE;
   }
 }
 
@@ -173,10 +162,10 @@ bool parameterverification(Type input,operationclassify oc,parametertype param)
 int classifyoperation(struct operationonparameter *opparameter)
 {
   
-  operation optype=opparameter->optype;
-  if(optype==Monop)
+  operationtype optype=opparameter->optype;
+  if(optype==binaryoperation)
   {
-      binop bop=inputparameter->operation.binoperation;
+      binop bop=opparameter->operation.binaryop->operation;
 
       if(bop==BO_add|| bop== BO_sub|| bop==BO_mul || bop==BO_div ||bop== BO_mod)
       {
@@ -186,7 +175,7 @@ int classifyoperation(struct operationonparameter *opparameter)
       {
         return logicaloperation;
       }
-      else (bop==BO_or || bop== BO_and)
+      else 
       {
         return relationaloperation;
       }
@@ -194,8 +183,8 @@ int classifyoperation(struct operationonparameter *opparameter)
   }
   else
   {
-    monop mop=inputparameter->operation.monop;
-    if(mop==MO_minus)
+    monop mop=opparameter->operation.monop->operation;
+    if(mop==MO_neg)
     {
       return arithmeticoperation;
     }
@@ -204,57 +193,56 @@ int classifyoperation(struct operationonparameter *opparameter)
   }
 }
 
-
-int checkoperation(struct operationonparameter *opparameter)
+// Checks the types of the operands for the specified operation.
+// TRUE if valid.
+bool checkoperation(struct operationonparameter *opparameter)
 {
     struct binoperation *binop;
-    struct monooperation *monop;
+    struct monoperation *monop;
     bool flag;
-    opertionclassify oc;
-    operation optype=opparameter->optype;
+    operationclassify oc;
+    char *result;
     oc=classifyoperation(opparameter);
-    if(optype==Monop)
+    operationtype optype=opparameter->optype;
+    if(optype==monoperation)
     {
-        monop=opparameter->operation.monoperation;
+        monop=opparameter->operation.monop;
         
-        flag=parmeterverifiation(monop->input,oc,inputtype);
+        flag=parameterverification(monop->input,oc,inputtype);
         if(!flag)
         {
-         opparameter->errorstring=&(printExpectedError(inputtype,opparameter));
+          result=printExpectedError(monop->input,inputtype);
+         opparameter->errorstring=&result;
          return FALSE;
         }
-        flag=parmeterverifiation(monop->result,oc,outputtype);
-        if(!flag)
-        {
-         opparameter->errorstring=&(printExpectedError(outputtype,opparameter));
-          return FALSE;
-        } 
+        
         return TRUE;
     }
     else
     {
-        binop=opparameter->operation.binoperation;
+        binop=opparameter->operation.binaryop;
+        if ( binop->left != binop->right)
+        {
+          result=printMismatchError(binop->left,inputtype);
+          opparameter->errorstring=&result;
+        }
         flag=parameterverification(binop->left,oc,inputtype);
         if(!flag)
         {
-          opparameter->errorstring=&(printExpectedError(inputtype));
+          result=printExpectedError(binop->left,inputtype);
+          opparameter->errorstring=&result;
           return FALSE;
         }
         else 
          {
-            flag=parameterverification(binop->rightoc,oc,inputtype);
+            flag=parameterverification(binop->right,oc,inputtype);
             if(!flag)
             {
-              opparameter->errorstring=&printExpectedError(inputtype,opparameter);
+              result=printExpectedError(binop->right, inputtype);
+              opparameter->errorstring=&result;
               return FALSE;
             }   
          } 
-         flag=parameterverification(binop->result,oc,outputtype);
-         if(!flag)
-         {
-          printExpectedErroropparameter->errorstring=&(outputtype,opparameter);
-          return FALSE;
-         }
          return TRUE;
     }
 } 

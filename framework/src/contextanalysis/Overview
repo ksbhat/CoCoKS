@@ -76,7 +76,8 @@ Funcall: Check the possiblities of error here. Lot of possiblities. Array be car
 Expression: Lets start from the bottom because we know the data types there. That can be propogated to the next stage. Until the expression 			changes the datatype of the expression. For each operation assign the list of datatype possible so that we can get an idea of it 			at an early Stage. 
 			How about using an bitmap for the possible results?
 
-
+DECIDED NOT TO DO:
+- array dimension validation during type checking. i.e., catching array out of bound indexing errors.
 
 
 

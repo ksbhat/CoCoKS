@@ -26,6 +26,7 @@
 #include "stack_lib.h"
 #include "print.h"
 #include "infostruct.h"
+#include "ctinfo.h"
 
 /*
  * INFO structure
@@ -90,7 +91,7 @@ static info *FreeInfo( info *info)
 }
 
 // Frees single node
-void freeNode(node *arg_node)
+static void freeNode(node *arg_node)
 {
 	if(arg_node!=NULL)
 	{
@@ -117,7 +118,7 @@ void freevarlistname(struct varlistname *varlist)
 }
  */
 
-void freevariablelist(struct variablelist *variable)
+static void freevariablelist(struct variablelist *variable)
 {
 	DBUG_ENTER("SEPfreevariablelist");
 	struct variablelist *prevlist;
@@ -141,7 +142,7 @@ void freevariablelist(struct variablelist *variable)
 }
 
 // Used for arrays.
-void freescopedvariable(struct scopedvariable *scopedlist)
+static void freescopedvariable(struct scopedvariable *scopedlist)
 {
 	DBUG_ENTER("SEPfreescopedvariable");
 	struct scopedvariable *prevlist;
@@ -300,9 +301,9 @@ node* returnarraydec(node *var_node,info *arg_info)
 
 node *SEPprogram(node *arg_node, info * arg_info)
 {
-	node *tail,*codeblock,*program;
+	node *program;
 	struct scopedvariable *globalarray;
-	struct variablelist *backup;
+	////struct variablelist *backup;
 	DBUG_ENTER("SEPprogram");
 
 	program=arg_node;
@@ -435,8 +436,8 @@ node *SEPusualdef (node *arg_node, info * arg_info)
 {
 
 	node *assignment, *var, *source;
-	node *statement, *statementlist,*final_statement;
-	struct varlistname *namecollision;
+	node *statementlist,*final_statement;
+	////struct varlistname *namecollision;
 
 	DBUG_ENTER("SEPusualdef");
 
@@ -524,7 +525,7 @@ node *SEPvardec(node *arg_node,info *arg_info)
 {
 	node *expr_list, *new_expr_list, *funvar, *funcall, *assignment_statement;
 	node *statement_list,*expr,*tail,*var,*vardec,*final_statement;
-	struct varlistname *namecollision;
+	////struct varlistname *namecollision;
 	struct variablelist *list,*shadowingvariable;
 
 	DBUG_ENTER("SEPvardec");
@@ -923,7 +924,7 @@ node *SEPstatement(node *arg_node, info * arg_info)
 node *SEPforstat (node *arg_node,info *arg_info)
 {
 	node *forinit,*varnode,*varnodecopy,*vardec,*vardeccopy,*vardeclist,*expr,*assign,*statement;
-	node *statementlist;
+	////node *statementlist;
 	char *id;
 	char *parentid,*parentprevid;
 	DBUG_ENTER("SEPforstat");

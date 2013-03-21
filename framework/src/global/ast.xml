@@ -59,12 +59,13 @@
 		                	<node name="UsualDef"/>
 		                	<node name="ArrayDef"/>
 		                	<node name="VarDec"/>
-		                	<node name="ParamList"/>
 		                	<node name="FunBody"/>
 		                	<node name="StatementList"/>
 		                	<node name="FunCall"/>
+		                	<node name="IfStat"/>
 		          			<node name="ForStat"/>
-                			<node name="EnclosedBlock"/>      	
+		          			<node name="WhileStat"/>
+		          			<node name="DoWhileStat"/>
 		                	
 		        </travuser>
 		</traversal>
@@ -743,6 +744,19 @@
 					</targets>
 				</son>
 			</sons>
+			<attribute name="Count">
+				<!-- This node will be populated from within context analysis phase -->
+					<type name="Int">
+						<targets>
+							<target mandatory="no">
+								<any />
+								<phases>
+									<all />
+								</phases>
+							</target>
+						</targets>
+					</type>
+			</attribute>
 		</node>
 		<node name="Return">
 			<sons>
@@ -1225,6 +1239,19 @@
 						</targets>
 					</type>
 				</attribute>
+				<attribute name="ScopeDiff">
+				<!-- This node will be populated from within context analysis phase -->
+					<type name="Int">
+						<targets>
+							<target mandatory="no">
+								<any />
+								<phases>
+									<all />
+								</phases>
+							</target>
+						</targets>
+					</type>
+				</attribute>
 			</attributes>
 		</node>
 		<node name="Num">
@@ -1243,6 +1270,19 @@
 					</type>
 				</attribute>
 			</attributes>
+			<attribute name="Type">
+				<!-- This node will be populated from within context analysis phase -->
+					<type name="Type">
+						<targets>
+							<target mandatory="no">
+								<any />
+								<phases>
+									<all />
+								</phases>
+							</target>
+						</targets>
+					</type>
+			</attribute>
 		</node>
 		<node name="Float">
 			<sons />
@@ -1251,6 +1291,19 @@
 					<type name="Float">
 						<targets>
 							<target mandatory="yes">
+								<any />
+								<phases>
+									<all />
+								</phases>
+							</target>
+						</targets>
+					</type>
+				</attribute>
+				<attribute name="Type">
+				<!-- This node will be populated from within context analysis phase -->
+					<type name="Type">
+						<targets>
+							<target mandatory="no">
 								<any />
 								<phases>
 									<all />
@@ -1268,6 +1321,19 @@
 					<type name="Bool">
 						<targets>
 							<target mandatory="yes">
+								<any />
+								<phases>
+									<all />
+								</phases>
+							</target>
+						</targets>
+					</type>
+				</attribute>
+				<attribute name="Type">
+				<!-- This node will be populated from within context analysis phase -->
+					<type name="Type">
+						<targets>
+							<target mandatory="no">
 								<any />
 								<phases>
 									<all />

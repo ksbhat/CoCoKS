@@ -55,15 +55,15 @@ SUBPHASE( prt,
           PRTdoPrint, 
           ALWAYS,
           prir)      
-
+/*
 SUBPHASE( frtr, 
           "De-allocating syntax tree representation",
           FREEdoFreeTree, 
           ALWAYS,
           prir)
-
+*/
 ENDPHASE( prir)
-/*
+
 PHASE( ca, 
        "Performing Context Analysis",
   ALWAYS)
@@ -87,7 +87,7 @@ SUBPHASE( frtr,
           ca)
 
 ENDPHASE( ca)
-*/
+
 
 /******************************************************************************/
 

@@ -70,7 +70,7 @@ struct TABSTACK {
 
 #define EPILOGUE  pop();
 
-void push()
+static void push()
 {
   if ( TABSTACK_MAXSIZE > tabstack.n_count)
   {
@@ -78,7 +78,7 @@ void push()
   }
 }
 
-void pop()
+static void pop()
 {
   if ( 0 < tabstack.n_count)
   {
