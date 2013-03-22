@@ -1231,7 +1231,7 @@ node
 
 	info = MakeInfo();
 
-	TRAVpush( TR_sep);
+	TRAVpush( TR_ca);
 
 	syntaxtree = TRAVdo( syntaxtree, info);
 

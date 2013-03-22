@@ -64,29 +64,55 @@ SUBPHASE( frtr,
 */
 ENDPHASE( prir)
 
-PHASE( ca, 
+
+PHASE( rp, 
        "Performing Context Analysis",
   ALWAYS)
 
-SUBPHASE( sca,
-          "Linking and evaluating context specific Information",
-          CAdoContextAnalysis, 
+SUBPHASE( con,
+          "Replacing conjunctions and disjunctions with branch statements",
+          CONdoReplaceAndnOr, 
           ALWAYS,
-          ca)
+          rp)
 
 SUBPHASE( prt, 
           "Printing the intermediate representation",
           PRTdoPrint, 
           ALWAYS,
-          ca)      
+          rp)      
 
 SUBPHASE( frtr, 
           "De-allocating syntax tree representation",
           FREEdoFreeTree, 
           ALWAYS,
-          ca)
+          rp)
 
-ENDPHASE( ca)
+ENDPHASE( rp)
+
+
+PHASE( sca, 
+       "Performing Context Analysis",
+  ALWAYS)
+
+SUBPHASE( ca,
+          "Linking and evaluating context specific Information",
+          CAdoContextAnalysis, 
+          ALWAYS,
+          sca)
+
+SUBPHASE( prt, 
+          "Printing the intermediate representation",
+          PRTdoPrint, 
+          ALWAYS,
+          sca)      
+/*
+SUBPHASE( frtr, 
+          "De-allocating syntax tree representation",
+          FREEdoFreeTree, 
+          ALWAYS,
+          sca)
+*/
+ENDPHASE( sca)
 
 
 /******************************************************************************/
