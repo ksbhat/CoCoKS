@@ -3,6 +3,10 @@
  *
  *  Created on: Mar 15, 2013
  *      Author: sharan
+ *
+ *	Redesigned for multiple simultaneous stacks 
+ *		ON: Mar 21, 2013
+ *		Author: Koustubha
  */
 #include "stack_lib.h"
 #include "memory.h"
