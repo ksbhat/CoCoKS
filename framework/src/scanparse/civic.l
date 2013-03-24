@@ -377,8 +377,8 @@ NOT
 				DEBUG("list float ");
 				DEBUG(yytext);
 				
-				yylval.cint=atoi(yytext);
-                             	FILTER( NUM);
+				yylval.cflt=atof(yytext);
+                             	FILTER( FLOAT);
 			}
 
 \n.*                    { 

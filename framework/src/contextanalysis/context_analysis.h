@@ -81,5 +81,8 @@ extern node *CAifstat(node *arg_node, info *arg_info);
 extern node *CAstatementlist(node *arg_node, info *arg_info);
 extern node *CAfunbody(node *arg_node,info *arg_info);
 extern node *CAvardec(node *arg_node,info *arg_info);
+extern node *CAbool(node *arg_node,info *arg_info);
+extern node *CAfloat(node *arg_node,info *arg_info);
+extern node *CAnum(node *arg_node,info *arg_info);
 
 #endif 

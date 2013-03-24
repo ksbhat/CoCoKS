@@ -211,7 +211,7 @@ char *SEPgenvarname(info *arg_info)
 	}
 	DBUG_RETURN(name);
 }
-*/
+ */
 
 /*
 bool checkVariableExist(node *var_node,info *arg_info)
@@ -288,7 +288,7 @@ bool checkshadow(node *var_node,info *arg_info)
 
 	DBUG_RETURN(FALSE);
 }
-*/
+ */
 
 node *CAprogram(node *arg_node, info * arg_info)
 {
@@ -299,57 +299,59 @@ node *CAprogram(node *arg_node, info * arg_info)
 
 	if(INFO_PROGRAMSTART(arg_info)==NULL)
 	{
+		printf("I am inside the first loop");
 		INFO_PROGRAMSTART(arg_info)=arg_node;
 		INFO_BUILDHASHTABLE(arg_info)=LUTgenerateLut();
+		INFO_VARIABLERUN(arg_info)=TRUE;
 	}
-	
+
 	PROGRAM_NEXT(arg_node)=TRAVopt(PROGRAM_NEXT(arg_node),arg_info);
-
-	
-
-	INFO_VARIABLERUN(arg_info)=TRUE;
 
 	PROGRAM_CODEBLOCK(arg_node)=TRAVdo(PROGRAM_CODEBLOCK(arg_node),arg_info);
 
 	if(INFO_PROGRAMSTART(arg_info)==arg_node)
 	{
+
 		if(INFO_BUILDHASHTABLE(arg_info)!=NULL)
 		{
 			globalarray=MEMmalloc(sizeof(struct scopedvariable));
 			globalarray->hash_table=INFO_BUILDHASHTABLE(arg_info);
 			globalarray->next=NULL;
 			INFO_HEADSCOPEDARRAY(arg_info)=globalarray;
-			INFO_BUILDHASHTABLE(arg_info)=NULL;
+			printf("\n Created hashtable at the global scope");
+
 		}
+		else
+			printf("\n Value INFO HASH TABLE is null");
+
+		INFO_BUILDHASHTABLE(arg_info)=NULL;
 
 		INFO_VARIABLERUN(arg_info)=FALSE;
 
 		//Funbody can start processing the contents in the body
 		program=arg_node;
-
+		int i=0;
 		while(program!=NULL)
 		{
-			if(NODE_TYPE(PROGRAM_CODEBLOCK(program))==N_fundef || NODE_TYPE(program)==N_vardeclistlocalfundef)
+
+			if(NODE_TYPE(PROGRAM_CODEBLOCK(program))==N_fundef || NODE_TYPE(PROGRAM_CODEBLOCK(program))==N_vardeclistlocalfundef)
 			{	
+				printf("\nAbout to get through the body of the function");
 				PROGRAM_CODEBLOCK(program)=TRAVdo(PROGRAM_CODEBLOCK(program),arg_info);
 			}
 			program=PROGRAM_NEXT(program);	
 		}
 
+		/*
+		 * this code will the global scope variable
+		 */
+
+		if(INFO_HEADSCOPEDARRAY(arg_info)!=NULL)
+		{
+			freescopedvariable(INFO_HEADSCOPEDARRAY(arg_info));
+		}
+
 	}
-
-
-	/*
-	 * this code will the global scope variable
-	 */
-
-	if(INFO_HEADSCOPEDARRAY(arg_info)!=NULL)
-	{
-		freescopedvariable(INFO_HEADSCOPEDARRAY(arg_info));
-	}
-
-	
-
 
 	DBUG_RETURN(arg_node);
 }
@@ -363,7 +365,7 @@ node *CAvardeclistlocalfundef(node *arg_node,info *arg_info)
 	}
 
 	VARDECLISTLOCALFUNDEF_LOCALFUNDEF(arg_node)=TRAVopt(VARDECLISTLOCALFUNDEF_LOCALFUNDEF(arg_node),arg_info);
-	
+
 	DBUG_RETURN(arg_node);
 }
 
@@ -377,37 +379,45 @@ node *CAfundec(node *arg_node,info *arg_info)
 
 node *CAfunheader(node *arg_node,info *arg_info)
 {
-	DBUG_ENTER("CAfundec");
+	DBUG_ENTER("CAfunheader");
 
 	struct functioninfo *funinfo;
-	struct idinfo *iddetails,*previddetails;
+	struct idinfo *iddetails,**previddetails;
 	char *funname;
 
- 	if(INFO_VARIABLERUN(arg_info))
- 	{	
- 		lut_t *hash_table= INFO_BUILDHASHTABLE(arg_info);	
+
+
+	if(INFO_VARIABLERUN(arg_info))
+	{
+		lut_t *hash_table= INFO_BUILDHASHTABLE(arg_info);
+
 
 		if(hash_table!=NULL)
 		{
+
 			funinfo=MEMmalloc(sizeof(struct functioninfo));
 
 			//Memory used only for the structure rest reuses the memory from existing memory. Do not release it.
 			funinfo->funheader=arg_node;
 			funinfo->returntype=FUNHEADER_TYPE(arg_node);
 			funinfo->paramlist=FUNHEADER_PARAMLIST(arg_node);
-		
-		
+
+
 			iddetails=MEMmalloc(sizeof(struct idinfo));
 			iddetails->vartype=functionname;
 			iddetails->varnode=FUNHEADER_VAR(arg_node);
 			iddetails->info.funinfo=funinfo;
 
 			funname=VAR_NAME(FUNHEADER_VAR(arg_node));
-			if((previddetails=(struct idinfo*)LUTsearchInLutS(hash_table,funname))==NULL)
+			previddetails=(struct idinfo **)LUTsearchInLutS(hash_table,funname);
+
+			if(previddetails==NULL)
+			{
 				hash_table=LUTinsertIntoLutS(hash_table,funname,iddetails);
+			}
 			else
 			{
-				CAredeclarationerror(NODE_LINE(arg_node),funname,NODE_LINE(previddetails->varnode));
+				CAredeclarationerror(NODE_LINE(arg_node),funname,NODE_LINE((*previddetails)->varnode));
 			}
 		}
 	}
@@ -415,7 +425,7 @@ node *CAfunheader(node *arg_node,info *arg_info)
 	{
 		INFO_FUNCTIONNAME(arg_info)=VAR_NAME(FUNHEADER_VAR(arg_node));
 	}	
-	
+
 	DBUG_RETURN(arg_node);
 }
 
@@ -437,7 +447,7 @@ node *CAlocalfundef(node *arg_node, info * arg_info)
 	LOCALFUNDEF_FUNHEADER(arg_node)=TRAVdo(LOCALFUNDEF_FUNHEADER(arg_node),arg_info);
 	if(!INFO_VARIABLERUN(arg_info))
 	{
-	
+		printf("\ninside funbody");
 		LOCALFUNDEF_FUNBODY (arg_node)=TRAVdo(LOCALFUNDEF_FUNBODY (arg_node),arg_info);
 	}
 	DBUG_RETURN(arg_node);
@@ -448,25 +458,27 @@ node *CAusualdef(node *arg_node,info *arg_info)
 {
 	DBUG_ENTER("CAusualdef");
 	struct globalvariable *varinfo;
-	struct idinfo *id,*previddetails;
+	struct idinfo *id,**previddetails;
 
 	lut_t *hash_table=INFO_BUILDHASHTABLE(arg_info);
 	if(hash_table!=NULL)
 	{
 		varinfo=MEMmalloc(sizeof(struct globalvariable));
 		varinfo->usual_def=arg_node;
-		
+
 
 		id=MEMmalloc(sizeof(struct idinfo));
 		id->vartype=globaldec;
 		id->varnode=USUALDEF_VAR(arg_node);
 		id->info.globalvarinfo=varinfo;
-		
-		if((previddetails=(struct idinfo*)LUTsearchInLutS(hash_table,VAR_NAME(id->varnode)))==NULL)
-				hash_table=LUTinsertIntoLutS(hash_table,VAR_NAME(id->varnode),id);
+		previddetails=(struct idinfo **)LUTsearchInLutS(hash_table,VAR_NAME(id->varnode));
+
+
+		if(previddetails==NULL)
+			hash_table=LUTinsertIntoLutS(hash_table,VAR_NAME(id->varnode),id);
 		else
 		{
-			CAredeclarationerror(NODE_LINE(arg_node),VAR_NAME(id->varnode),NODE_LINE(previddetails->varnode));
+			CAredeclarationerror(NODE_LINE(arg_node),VAR_NAME(id->varnode),NODE_LINE((*previddetails)->varnode));
 		}
 
 	}
@@ -478,7 +490,7 @@ node *CAarraydef(node *arg_node,info *arg_info)
 {
 	DBUG_ENTER("CAarraydef");
 	struct globalArrayVariable *varinfo;
-	struct idinfo *id,*previddetails;
+	struct idinfo *id,**previddetails;
 
 	lut_t *hash_table=INFO_BUILDHASHTABLE(arg_info);
 	if(hash_table!=NULL)
@@ -493,12 +505,18 @@ node *CAarraydef(node *arg_node,info *arg_info)
 		id->vartype=globalarraydec;
 		id->varnode=ARRAYDEF_VAR(arg_node);
 		id->info.globalarrayinfo=varinfo;
-		
-		if((previddetails=(struct idinfo*)LUTsearchInLutS(hash_table,VAR_NAME(id->varnode)))==NULL)
-				hash_table=LUTinsertIntoLutS(hash_table,VAR_NAME(id->varnode),id);
+		printf("\n before the search Table");
+		previddetails=(struct idinfo **)LUTsearchInLutS(hash_table,VAR_NAME(id->varnode));
+
+		if(previddetails==NULL)
+		{
+			printf("\n new insert");
+			hash_table=LUTinsertIntoLutS(hash_table,VAR_NAME(id->varnode),id);
+		}
 		else
 		{
-			CAredeclarationerror(NODE_LINE(arg_node),VAR_NAME(id->varnode),NODE_LINE(previddetails->varnode));
+			printf("\n Already exists");
+			CAredeclarationerror(NODE_LINE(arg_node),VAR_NAME(id->varnode),NODE_LINE((*previddetails)->varnode));
 		}
 
 	}
@@ -509,9 +527,23 @@ node *CAvardec(node *arg_node,info *arg_info)
 {
 	DBUG_ENTER("CAvardec");
 	struct variableinfo *varinfo;
-	struct idinfo *id,*previddetails;
+	struct idinfo *id;
+	struct idinfo **previddetails;
+	node *exprlist;
 
 	lut_t *hash_table=INFO_BUILDHASHTABLE(arg_info);
+	exprlist=VARDEC_EXPRLIST(arg_node);
+	while(exprlist!=NULL)
+	{
+		INFO_RESULTTYPE(arg_info)= T_unknown;
+		EXPRLIST_EXPR(exprlist)=TRAVdo(EXPRLIST_EXPR(exprlist),arg_info);
+		if(INFO_RESULTTYPE(arg_info)!=T_int)
+		{
+			CAarrayindicesmustbeinterror(NODE_LINE(arg_node));
+		}
+		exprlist=EXPRLIST_NEXT(exprlist);
+	}
+
 	if(hash_table!=NULL)
 	{
 		varinfo=MEMmalloc(sizeof(struct variableinfo));
@@ -524,12 +556,13 @@ node *CAvardec(node *arg_node,info *arg_info)
 		id->vartype=variablename;
 		id->varnode=VARDEC_VAR(arg_node);
 		id->info.varinfo=varinfo;
-		
-		if((previddetails=(struct idinfo*)LUTsearchInLutS(hash_table,VAR_NAME(id->varnode)))==NULL)
-				hash_table=LUTinsertIntoLutS(hash_table,VAR_NAME(id->varnode),id);
+		previddetails=(struct idinfo **)LUTsearchInLutS(hash_table,VAR_NAME(id->varnode));
+		if(previddetails==NULL)
+			hash_table=LUTinsertIntoLutS(hash_table,VAR_NAME(id->varnode),id);
 		else
 		{
-			CAredeclarationerror(NODE_LINE(arg_node),VAR_NAME(id->varnode),NODE_LINE(previddetails->varnode));
+
+			CAredeclarationerror(NODE_LINE(arg_node),VAR_NAME(id->varnode),NODE_LINE((*previddetails)->varnode));
 		}
 
 	}
@@ -546,23 +579,24 @@ node *CAfunbody(node *arg_node,info *arg_info)
 	node *param;
 	lut_t *hash_table;
 	struct functioninfo *funinfo;
-	struct idinfo *varinfo;
+	struct idinfo *varinfo,**prevvarinfo;
 	struct paraminformation *paraminfo;
 	char *paramname;
 	bool ishashadded=FALSE;
 	struct scopedvariable *currentscopeinfo;
-
+	printf("\nI am inside funbody");
 	hash_table=LUTgenerateLut();
 	if(INFO_FUNCTIONNAME(arg_info)!=NULL)
 	{
 		scopevariablelist=INFO_HEADSCOPEDARRAY(arg_info);
-		varinfo=(struct idinfo*) LUTsearchInLutS(scopevariablelist->hash_table,INFO_FUNCTIONNAME(arg_info));
-		if(varinfo!=NULL)
-		{
+		prevvarinfo=(struct idinfo**) LUTsearchInLutS(scopevariablelist->hash_table,INFO_FUNCTIONNAME(arg_info));
 
+		if(prevvarinfo!=NULL)
+		{
+			varinfo=(*prevvarinfo);
 			funinfo=varinfo->info.funinfo;
 			paramlist=funinfo->paramlist;
-			
+
 			while(paramlist!=NULL)
 			{
 				param=PARAMLIST_PARAM(paramlist);
@@ -580,19 +614,27 @@ node *CAfunbody(node *arg_node,info *arg_info)
 			}
 		}	
 	}
-	
+
 	INFO_VARIABLERUN(arg_info)=TRUE;
-	INFO_BUILDHASHTABLE(arg_info)=hash_table;
+	if(!LUTisEmptyLut(hash_table))
+	{
+		INFO_BUILDHASHTABLE(arg_info)=hash_table;
+	}
+	else
+		INFO_BUILDHASHTABLE(arg_info)=NULL;
+
 	FUNBODY_VARDECLIST(arg_node)=TRAVopt(FUNBODY_VARDECLIST(arg_node),arg_info);
 
 	FUNBODY_LOCALFUNDEFLIST(arg_node)=TRAVopt(FUNBODY_LOCALFUNDEFLIST(arg_node),arg_info);
-	
+
 	//Creating a scope for this function prefixing it to the head of the list.
 	if(INFO_BUILDHASHTABLE(arg_info)!=NULL)
 	{
+		printf("\n creating a hash table at local scope");
 		scopevariablelist =MEMmalloc(sizeof(struct scopedvariable));
 		scopevariablelist->hash_table=INFO_BUILDHASHTABLE(arg_info);
 		scopevariablelist->next=INFO_HEADSCOPEDARRAY(arg_info);
+		printf("\n Created hashtable at the global scope");
 		INFO_HEADSCOPEDARRAY(arg_info)=scopevariablelist;
 		INFO_BUILDHASHTABLE(arg_info)=NULL;
 		ishashadded=TRUE;
@@ -601,7 +643,7 @@ node *CAfunbody(node *arg_node,info *arg_info)
 
 	//Second pass starts here
 	INFO_VARIABLERUN(arg_info)=FALSE; 
-	
+
 	FUNBODY_LOCALFUNDEFLIST(arg_node)=TRAVopt(FUNBODY_LOCALFUNDEFLIST(arg_node),arg_info);
 	FUNBODY_STATEMENTLIST(arg_node)=TRAVopt(FUNBODY_STATEMENTLIST(arg_node),arg_info);
 
@@ -721,7 +763,7 @@ node *CAassign(node *arg_node, info *arg_info)
 {
 	DBUG_ENTER("CAassignstatement");
 	type exprtype, vartype;
-
+	INFO_RESULTTYPE(arg_info)=T_unknown;
 	ASSIGN_EXPR(arg_node) = TRAVdo(ASSIGN_EXPR(arg_node), arg_info);
 
 	exprtype = INFO_RESULTTYPE(arg_info);
@@ -744,6 +786,7 @@ node *CAcast(node *arg_node, info *arg_info)
 	type newtype;
 	//char errorstring[100];
 
+	INFO_RESULTTYPE(arg_info)=T_unknown;
 	CAST_EXPR(arg_node) = TRAVdo(CAST_EXPR(arg_node), arg_info);
 
 	//exprtype = INFO_RESULTTYPE(arg_info);
@@ -769,15 +812,15 @@ node *CAcast(node *arg_node, info *arg_info)
 
 			break;
 		case T_float:
-			
+
 			break;
 		default:
 
 			break;
 	}
-	*/
+	 */
 
-    INFO_RESULTTYPE(arg_info) = newtype;
+	INFO_RESULTTYPE(arg_info) = newtype;
 
 	DBUG_RETURN(arg_node);
 }
@@ -793,14 +836,14 @@ node *CAfuncall(node *arg_node, info *arg_info)
 	int exprcount = 0,dimension_count=0;
 	char *errorstring;
 	node *varnumlist,*arrindexlist;
-
+	INFO_RESULTTYPE(arg_info)=T_unknown;
 	FUNCALL_VAR(arg_node) = TRAVdo(FUNCALL_VAR(arg_node), arg_info);
 
 	rettype = INFO_RESULTTYPE(arg_info);
 
 	exprlist=FUNCALL_EXPRLIST(arg_node);
 
-// ---> Type checking
+	// ---> Type checking
 	funheader = FUNCALL_VAR(VAR_DECL(arg_node));
 
 	paramlist = FUNHEADER_PARAMLIST(funheader);
@@ -814,9 +857,9 @@ node *CAfuncall(node *arg_node, info *arg_info)
 		// original list traversal
 		param = PARAMLIST_PARAM(paramlist);
 		paramlist=PARAMLIST_NEXT(paramlist);
-		
+
 		// building reverse list, so that we would be able to ignore the array dimension variables if any.
-	
+
 		// pop the dimension variables if its an array type.
 		varnumlist = PARAM_VARNUMLIST(param);
 		dimension_count=0;
@@ -834,7 +877,7 @@ node *CAfuncall(node *arg_node, info *arg_info)
 		stackparamlist->dimension_count = dimension_count;
 		stackparamlist->paramtype = PARAM_TYPE(param);
 		topstackparamlist = stackparamlist;
-		
+
 		paramcount++;
 	}
 
@@ -850,7 +893,7 @@ node *CAfuncall(node *arg_node, info *arg_info)
 		if( NODE_TYPE(expr) == N_var)
 		{
 			arrindexlist = VARDEC_EXPRLIST(expr);
-		
+
 			dimension_count=0;
 
 			while ( NULL != arrindexlist)
@@ -868,7 +911,7 @@ node *CAfuncall(node *arg_node, info *arg_info)
 		stackexprlist->dimension_count = dimension_count;
 		stackexprlist->paramtype = PARAM_TYPE(param);
 		topstackexprlist = stackexprlist;
-		
+
 		exprcount++; // counting the total number of args in funcall (including expansions).
 	}
 
@@ -928,11 +971,11 @@ node *CAfuncall(node *arg_node, info *arg_info)
 		freestacklist(topstackexprlist);
 	}
 
-//--> Array dimension reduction
+	//--> Array dimension reduction
 	/*
 	 * Steps: Check for __allocate function call
 	 * and replace the exprlist of it, with a binop expr that modifies m, n to m * n
-	*/
+	 */
 
 	node *newexpr, *leftsize, *rightsize;
 
@@ -965,23 +1008,24 @@ node *CAmonop(node *arg_node, info *arg_info)
 
 	OPERATIONONPARAMETER op_on_parameter;
 	MONOPERATION	mon_op;
+	INFO_RESULTTYPE(arg_info)=T_unknown;
 
 	MONOP_RIGHT(arg_node) = TRAVdo(MONOP_RIGHT(arg_node), arg_info);
 
 	righttype = INFO_RESULTTYPE(arg_info);
 
 	// Get the kind of operation to evaluate whether the type of operands is valid or not.
-    mon_op.input = righttype;
-    mon_op.operation = MONOP_OP(arg_node);
+	mon_op.input = righttype;
+	mon_op.operation = MONOP_OP(arg_node);
 
-    op_on_parameter.optype = monoperation;
-    op_on_parameter.operation.monop = &mon_op;
+	op_on_parameter.optype = monoperation;
+	op_on_parameter.operation.monop = &mon_op;
 
-    if (FALSE == checkoperation(&op_on_parameter))
-    {
-    	CAtypemismatcherror(NODE_LINE(arg_node), *(op_on_parameter.errorstring));
-    	INFO_RESULTTYPE(arg_info) = T_unknown; // We dont know the type!
-    }
+	if (FALSE == checkoperation(&op_on_parameter))
+	{
+		CAtypemismatcherror(NODE_LINE(arg_node), *(op_on_parameter.errorstring));
+		INFO_RESULTTYPE(arg_info) = T_unknown; // We dont know the type!
+	}
 
 	DBUG_RETURN(arg_node);	
 }
@@ -994,6 +1038,7 @@ node *CAbinop(node *arg_node, info *arg_info)
 
 	OPERATIONONPARAMETER op_on_parameter;
 	BINOPERATION	bin_op;
+	INFO_RESULTTYPE(arg_info)=T_unknown;
 
 	BINOP_LEFT(arg_node) = TRAVdo(BINOP_LEFT(arg_node), arg_info);
 
@@ -1004,18 +1049,18 @@ node *CAbinop(node *arg_node, info *arg_info)
 	righttype = INFO_RESULTTYPE(arg_info);
 
 	// Get the kind of operation to evaluate whether the type of operands is valid or not.
-    bin_op.left = lefttype;
-    bin_op.right = righttype;
-    bin_op.operation = BINOP_OP(arg_node);
+	bin_op.left = lefttype;
+	bin_op.right = righttype;
+	bin_op.operation = BINOP_OP(arg_node);
 
-    op_on_parameter.optype = binaryoperation;
-    op_on_parameter.operation.binaryop = &bin_op;
+	op_on_parameter.optype = binaryoperation;
+	op_on_parameter.operation.binaryop = &bin_op;
 
-    if (FALSE == checkoperation(&op_on_parameter))
-    {
-    	CAtypemismatcherror(NODE_LINE(arg_node), *op_on_parameter.errorstring);
-    	INFO_RESULTTYPE(arg_info) = T_unknown; // We dont know the type!
-    }
+	if (FALSE == checkoperation(&op_on_parameter))
+	{
+		CAtypemismatcherror(NODE_LINE(arg_node), *op_on_parameter.errorstring);
+		INFO_RESULTTYPE(arg_info) = T_unknown; // We dont know the type!
+	}
 
 	DBUG_RETURN(arg_node);	
 }
@@ -1024,7 +1069,7 @@ node *CAarrayinit(node *arg_node, info *arg_info)
 {
 	DBUG_ENTER("CAarrayinit");
 	node *expr, *exprlist;
-
+	INFO_RESULTTYPE(arg_info)=T_unknown;
 	if (NULL != ARRAYINIT_EXPRLIST(arg_node))
 	{
 		exprlist  = ARRAYINIT_EXPRLIST(arg_node);
@@ -1048,11 +1093,12 @@ node *CAvar(node *arg_node, info *arg_info)
 	DBUG_ENTER("CAvar");
 	lut_t *hash_table;
 	struct scopedvariable *scopedhashtable;
-	struct idinfo *varinfo;
+	struct idinfo *varinfo,**prevvarinfo;
 	bool flag=FALSE,firsttimeindicator=FALSE;
 	node *sizeindex,*exprindex,*sizeexpr,*currexpr;
 	node *varexpr, *varexprlist, *exprlist, *sizelist, *newexpr;
 	int exprlistcount = 0, expectedcount=0;
+	VARTYPE type;
 
 	/*****************************************
 	 !!General guideline for every element processing!!
@@ -1060,7 +1106,7 @@ node *CAvar(node *arg_node, info *arg_info)
 	 TRAV[do|opt]() on the constituent nodes.
 	 PROCESS...
 	 SET INFO_RESULTTYPE(arg_info) at the end before returning!
-	******************************************/
+	 ******************************************/
 
 	/******TYPE info COLLECTION*****************/
 	if (NULL != VAR_EXPRLIST(arg_node))
@@ -1079,15 +1125,19 @@ node *CAvar(node *arg_node, info *arg_info)
 			exprlistcount++;
 		}
 	}
-	 
+
 	scopedhashtable=INFO_HEADSCOPEDARRAY(arg_info);
+
 	while(scopedhashtable!=NULL)
 	{
 		hash_table=scopedhashtable->hash_table;
-		varinfo=(struct idinfo*)LUTsearchInLutS(hash_table,VAR_NAME(arg_node));
-		if(varinfo!=NULL)
+		printf("\n Searching for %s",VAR_NAME(arg_node));
+		prevvarinfo=(struct idinfo**)LUTsearchInLutS(hash_table,VAR_NAME(arg_node));
+
+		if(prevvarinfo!=NULL)
 		{
-			VARTYPE type=varinfo->vartype;
+			varinfo=*prevvarinfo;
+			type=varinfo->vartype;
 
 
 			if(type==variablename)
@@ -1127,96 +1177,120 @@ node *CAvar(node *arg_node, info *arg_info)
 	{
 		CAdeclarationnotfound(NODE_LINE(arg_node),VAR_NAME(arg_node));
 	}
-	
-    sizelist = VARDEC_EXPRLIST(VAR_DECL(arg_node));
-    expectedcount = 0;
-    while(NULL != sizelist)
-    {
-    	expectedcount++;
-    	sizelist = EXPRLIST_NEXT(sizelist);
-    }
 
-    if (expectedcount != exprlistcount)
-    {
-    	CAarrayindexingerror(NODE_LINE(arg_node));
-    }
-
-	/*********Array dimension reduction*******************/
-
-	exprlist = VAR_EXPRLIST(arg_node);
-
-	if (NULL != exprlist)
+	if(prevvarinfo != NULL && type!= functionname && flag)
 	{
 		sizelist = VARDEC_EXPRLIST(VAR_DECL(arg_node));
-
-		STACK *sizestack = MEMmalloc(sizeof(STACK));
-		STACK *exprstack = MEMmalloc(sizeof(STACK));
-
-		// Populate the sizestack by traversing the sizelist. But skip the first size.
-		sizelist = EXPRLIST_NEXT(sizelist);
+		expectedcount = 0;
 		while(NULL != sizelist)
 		{
-			push(sizestack, EXPRLIST_EXPR(sizelist) );
+			expectedcount++;
 			sizelist = EXPRLIST_NEXT(sizelist);
-		}		
-
-		//Populate the exprstack by traversing the exprlist.
-		while(NULL != exprlist ) // We shouldnt push the last of the index as no mul is required for that.
-		{
-			push(exprstack, EXPRLIST_EXPR(exprlist));
-			exprlist = EXPRLIST_NEXT(exprlist);
 		}
 
-		newexpr = pop(exprstack);  // this is our l in i, j, k, l indices.
-		if (NULL == newexpr)
+		if (expectedcount != exprlistcount)
 		{
-			// We shouldnt be here ever.
+			CAarrayindexingerror(NODE_LINE(arg_node));
 		}
 
-		// build newexpr something like: (p) * k + (p*o) * j + (p*o*n) * i
-		firsttimeindicator = TRUE;
-		while(FALSE == (isempty(sizestack)) )
-		{
-			sizeindex = pop(sizestack);
-			
+		/*********Array dimension reduction*******************/
 
-			//get size guy (o)
-			sizeindex = pop(sizestack);
-			
-			if (TRUE == firsttimeindicator)
+		exprlist = VAR_EXPRLIST(arg_node);
+
+		if (NULL != exprlist)
+		{
+			sizelist = VARDEC_EXPRLIST(VAR_DECL(arg_node));
+
+			STACK *sizestack = MEMmalloc(sizeof(STACK));
+			STACK *exprstack = MEMmalloc(sizeof(STACK));
+
+			// Populate the sizestack by traversing the sizelist. But skip the first size.
+			sizelist = EXPRLIST_NEXT(sizelist);
+			while(NULL != sizelist)
 			{
-				sizeexpr = sizeindex; 
-				firsttimeindicator = FALSE;
-			}
-			else
-			{
-				sizeexpr = TBmakeBinop(BO_mul, sizeexpr, sizeindex); // will compute (p*o)*n
+				push(sizestack, EXPRLIST_EXPR(sizelist) );
+				sizelist = EXPRLIST_NEXT(sizelist);
 			}
 
-			exprindex = pop(exprstack); // get the index, like k
-			currexpr = TBmakeBinop(BO_mul, sizeexpr, exprindex); // muliply with its multiplier.
+			//Populate the exprstack by traversing the exprlist.
+			while(NULL != exprlist ) // We shouldnt push the last of the index as no mul is required for that.
+			{
+				push(exprstack, EXPRLIST_EXPR(exprlist));
+				exprlist = EXPRLIST_NEXT(exprlist);
+			}
 
-			// add the two
-			newexpr =  TBmakeBinop(BO_add, newexpr, currexpr);
+			newexpr = pop(exprstack);  // this is our l in i, j, k, l indices.
+			if (NULL == newexpr)
+			{
+				// We shouldnt be here ever.
+			}
+
+			// build newexpr something like: (p) * k + (p*o) * j + (p*o*n) * i
+			firsttimeindicator = TRUE;
+			while(FALSE == (isempty(sizestack)) )
+			{
+				sizeindex = pop(sizestack);
+
+
+				//get size guy (o)
+				sizeindex = pop(sizestack);
+
+				if (TRUE == firsttimeindicator)
+				{
+					sizeexpr = sizeindex;
+					firsttimeindicator = FALSE;
+				}
+				else
+				{
+					sizeexpr = TBmakeBinop(BO_mul, sizeexpr, sizeindex); // will compute (p*o)*n
+				}
+
+				exprindex = pop(exprstack); // get the index, like k
+				currexpr = TBmakeBinop(BO_mul, sizeexpr, exprindex); // muliply with its multiplier.
+
+				// add the two
+				newexpr =  TBmakeBinop(BO_add, newexpr, currexpr);
+			}
+
+			FUNCALL_EXPRLIST(arg_node) = TBmakeExprlist(newexpr, NULL);
+
+			//Free the stacks
+			MEMfree(sizestack);
+			MEMfree(exprstack);
 		}
 
-		FUNCALL_EXPRLIST(arg_node) = TBmakeExprlist(newexpr, NULL);	
 
-		//Free the stacks
-		MEMfree(sizestack);
-		MEMfree(exprstack);
+		/*---------------------------------------------------*/
+
+		//Mark the type of the variable in the info structure, now that we know about it.
+		INFO_RESULTTYPE(arg_info) = VARDEC_TYPE(VAR_DECL(arg_node));
 	}
-	
-
-	/*---------------------------------------------------*/
-
-	//Mark the type of the variable in the info structure, now that we know about it.
-	INFO_RESULTTYPE(arg_info) = VARDEC_TYPE(VAR_DECL(arg_node));
-
 	DBUG_RETURN(arg_node);
 }
 
+node *CAnum(node *arg_node,info *arg_info)
+{
+	DBUG_ENTER("CAnum");
+	INFO_RESULTTYPE(arg_info)=T_int;
+	printf("\ninside INT");
+	DBUG_RETURN(arg_node);
+}
 
+node *CAfloat(node *arg_node,info *arg_info)
+{
+	DBUG_ENTER("CAfloat");
+	INFO_RESULTTYPE(arg_info)=T_float;
+	printf("\ninside FLOAT");
+	DBUG_RETURN(arg_node);
+}
+
+node *CAbool(node *arg_node,info *arg_info)
+{
+	DBUG_ENTER("CAbool");
+	printf("\ninside INT");
+	INFO_RESULTTYPE(arg_info)=T_bool;
+	DBUG_RETURN(arg_node);
+}
 
 node
 *CAdoContextAnalysis( node *syntaxtree)

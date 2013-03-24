@@ -64,7 +64,7 @@ SUBPHASE( frtr,
 */
 ENDPHASE( prir)
 
-
+/*
 PHASE( rp, 
        "Performing Context Analysis",
   ALWAYS)
@@ -88,7 +88,7 @@ SUBPHASE( frtr,
           rp)
 
 ENDPHASE( rp)
-
+*/
 
 PHASE( sca, 
        "Performing Context Analysis",

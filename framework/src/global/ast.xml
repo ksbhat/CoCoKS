@@ -56,19 +56,32 @@
 					<travuser>
 			                	<node name="Program"/>
 			                	<node name="VardeclistLocalFunDef" />
+			                	<node name="FunDec"/>
+			                	<node name="FunHeader"/>
+			                	<node name="Fundef"/>
+			                	<node name="LocalFunDef"/>
+			                	<node name="FunBody"/>
 			                	<node name="UsualDef"/>
 			                	<node name="ArrayDef"/>
 			                	<node name="VarDec"/>
-			                	<node name="FunBody"/>
-			                	<node name="StatementList"/>
+			                	<node name="Var"/>
+			                	<node name="ArrayInit"/>
+			                	<node name="BinOp"/>
+			                	<node name="MonOp"/>
 			                	<node name="FunCall"/>
+			                	<node name="Cast"/>
+			                	<node name="Assign"/>
+								<node name="StatementList"/>
 			                	<node name="IfStat"/>
 			          			<node name="ForStat"/>
 			          			<node name="WhileStat"/>
-			          			<node name="DoWhileStat"/>			                	
+			          			<node name="DoWhileStat"/>
+			          			<node name="Num"/>
+			          			<node name="Float"/>
+			          			<node name="Bool"/>			                	
 			        </travuser>
 			</traversal>
-			<traversal id="CON" name="Replacing conjunction and disjunction" default="sons"
+			<!--traversal id="CON" name="Replacing conjunction and disjunction" default="sons"
 					include="replacelogicalops.h" >
 					<travuser>
 								<node name="UsualDef"/>
@@ -84,7 +97,7 @@
 								<node name="VarDecList"/>
 								<node name="BinOp"/>
 					</travuser>
-			</traversal>
+			</traversal-->
 		</general>
 	</phases>
 	<nodesets>
