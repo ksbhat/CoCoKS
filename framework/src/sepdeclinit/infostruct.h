@@ -7,8 +7,11 @@
 
 #ifndef INFOSTRUCT_H_
 #define INFOSTRUCT_H_
+
+
 struct varlistname{
 	char* id;
+	char* previd;
 	struct varlistname *next;
 };
 
@@ -22,7 +25,7 @@ struct scopedvariable {
 	struct scopedvariable *next;
 };
 
-struct INFO {
+typedef struct INFO {
 	bool firsterror;
 	bool isglobal;
 	bool variablecheck;
@@ -37,14 +40,13 @@ struct INFO {
 	node *lvardeclist;
 	node *prevparamlist;
 	node *appendstatement;
-	char *forid;
-	char *prevforid;
+	struct varlistname *forid;
 	struct varlistname *head_varlistname;
 	struct scopedvariable *head_scopedarray;
 	struct scopedvariable *shadowed_variable;
 	struct variablelist *build_varlist;
 	struct variablelist *build_shadowlist;
-};
+}info;
 #define INFO_FIRSTERROR(n) ((n)->firsterror)
 #define INFO_VARIABLECHECK(n) ((n)->variablecheck)
 #define INFO_ISGLOBAL(n) ((n)->isglobal)
@@ -65,7 +67,6 @@ struct INFO {
 #define INFO_APPENDSTATEMENT(n)	((n)->appendstatement)
 #define INFO_ISFUNCALLSTATEMENT(n) ((n)->isFunctionCallStmt)
 #define INFO_FORID(n) ((n)->forid)
-#define INFO_PREVFORID(n) ((n)->prevforid)
 #define INFO_ENLCOSEDBLOCKCOUNT(n) ((n)->enclosedblockedcount)
 
 #define NAME_COUNTER_LIMIT 100

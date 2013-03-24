@@ -16,7 +16,10 @@ export void hello(int [i,j]b,int c)
 	{
 		for (int j=a,j,1)
 		{
-			printInt(a);
+			for(int k=j,j,1)
+			{
+				printInt(a);
+			}
 		}
 	}
 	

@@ -70,10 +70,16 @@ node *RENAMEenclosedblock(node *arg_node, info * arg_info)
 node *RENAMEvar(node *arg_node, info *info) {
     DBUG_ENTER("RENAMEvar");
     char *oldref;
-    if (STReq(INFO_PREVFORID(info), VAR_NAME(arg_node))) {
-        oldref = VAR_NAME(arg_node);
-        VAR_NAME(arg_node) = STRcpy(INFO_FORID(info));
-        MEMfree(oldref);
+    struct varlistname *currlistname=INFO_FORID(info);
+    while(currlistname!=NULL)
+    {
+    	if (STReq(currlistname->previd, VAR_NAME(arg_node))) {
+    		oldref = VAR_NAME(arg_node);
+    		VAR_NAME(arg_node) = STRcpy(currlistname->id);
+    		MEMfree(oldref);
+    		break;
+    	}
+    	currlistname=currlistname->next;
     }
     DBUG_RETURN(arg_node);
 }

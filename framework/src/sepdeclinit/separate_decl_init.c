@@ -76,7 +76,7 @@ static info *MakeInfo()
 
 	INFO_FORID(result)=NULL;
 
-	INFO_PREVFORID(result)=NULL;
+
 
 	return result;
 }
@@ -923,12 +923,12 @@ node *SEPstatement(node *arg_node, info * arg_info)
 
 node *SEPforstat (node *arg_node,info *arg_info)
 {
+
 	node *forinit,*varnode,*varnodecopy,*vardec,*vardeccopy,*vardeclist,*expr,*assign,*statement;
 	////node *statementlist;
 	char *id;
-	char *parentid,*parentprevid;
 	DBUG_ENTER("SEPforstat");
-
+	struct varlistname *listname,*prevlistname;
 	/*
 	 *  the block will have to be traversed first so that the order of
 	 * statement assignment is maintained in case of nested for loops
@@ -936,10 +936,20 @@ node *SEPforstat (node *arg_node,info *arg_info)
 	 */
 	forinit=FORSTAT_VARDEC(arg_node);
 	id=SEPgenvarname(arg_info);
-	parentid=INFO_FORID(arg_info);
-	parentprevid=INFO_PREVFORID(arg_info);
-	INFO_PREVFORID(arg_info)=VAR_NAME(VARDEC_VAR(forinit));
-	INFO_FORID(arg_info)=id;
+	prevlistname=INFO_FORID(arg_info);
+	listname=MEMmalloc(sizeof(struct varlistname));
+	listname->id=id;
+	listname->previd=VAR_NAME(VARDEC_VAR(forinit));
+	listname->next=NULL;
+	if(prevlistname==NULL)
+	{
+		INFO_FORID(arg_info)=listname;
+	}
+	else
+	{
+		listname->next=prevlistname;
+		INFO_FORID(arg_info)=listname;
+	}
 	FORSTAT_BLOCK(arg_node) = TRAVdo(FORSTAT_BLOCK(arg_node), arg_info);
 
 
@@ -973,8 +983,7 @@ node *SEPforstat (node *arg_node,info *arg_info)
 
 	TRAVpop();
 
-	INFO_PREVFORID(arg_info)=parentprevid;
-	INFO_FORID(arg_info)=parentid;
+	INFO_FORID(arg_info)=INFO_FORID(arg_info)->next;
 	freeNode(forinit);
 	DBUG_RETURN (arg_node);
 }
